@@ -110,7 +110,7 @@
                 <!-- Stats Row -->
                 <div id="dashboard-view">
                 <div class="dashboard-stats">
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="filterTable('all')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('all')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                         <div class="stat-icon blue">
                             <i class="ri-file-list-3-line"></i>
                         </div>
@@ -120,7 +120,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="filterTable('Pending')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('Pending')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                         <div class="stat-icon orange">
                             <i class="ri-time-line"></i>
                         </div>
@@ -130,7 +130,7 @@
                         </div>
                     </div>
                     
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="filterTable('Approved')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('Approved')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                         <div class="stat-icon green">
                             <i class="ri-check-double-line"></i>
                         </div>
@@ -328,6 +328,35 @@
         </div>
     </div>
 
+    <!-- Status Details Modal -->
+    <div id="status-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div style="max-width: 1200px; width: 100%; text-align: left; background: var(--bg-card); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);" id="modal-status-title">Daftar Pengajuan</h2>
+                <button onclick="document.getElementById('status-details-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
+            </div>
+            <div style="overflow-y: auto; flex-grow: 1; padding: 1.5rem;" class="table-container">
+                <table class="modern-table" style="width: 100%; margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tanggal</th>
+                            <th>Nama</th>
+                            <th>Unit</th>
+                            <th>Kegiatan</th>
+                            <th>Nominal</th>
+                            <th>Bank</th>
+                            <th>Bukti</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="status-details-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script>
         // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydaSlqJ8BPOPhnKd3P6j_lP84Ygfb3Vt7yCkF_tJRCZOeXmAOPh4Gm-wqBWpEazp5fCg/exec';
@@ -491,6 +520,55 @@
         function filterTable(status) {
             currentStatusFilter = status;
             applyFilters();
+        }
+
+        function showStatusModal(status) {
+            let filtered = currentData;
+            let title = 'Semua Pengajuan';
+            
+            if (status !== 'all') {
+                filtered = filtered.filter(d => d.Status === status);
+                if (status === 'Pending') title = 'Menunggu Konfirmasi';
+                if (status === 'Approved') title = 'Telah Dibayar';
+                if (status === 'Rejected') title = 'Ditolak';
+            }
+            
+            document.getElementById('modal-status-title').innerText = title + ' (' + filtered.length + ' data)';
+            
+            const tbody = document.getElementById('status-details-body');
+            if (filtered.length === 0) {
+                tbody.innerHTML = \`<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>\`;
+            } else {
+                let html = '';
+                filtered.forEach(item => {
+                    let dateStr = item.Tanggal;
+                    if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
+                    
+                    let buktiHtml = '';
+                    if (item.Bukti_Path) buktiHtml += \`<a href="\${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>\`;
+                    if (item.Bukti_TF_Path) buktiHtml += \`<br><a href="\${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>\`;
+
+                    html += \`
+                    <tr>
+                        <td>#\${item.ID}</td>
+                        <td>\${dateStr}</td>
+                        <td style="font-weight: 500;">\${item.Nama}</td>
+                        <td style="font-weight: 500;">\${item.Unit || '-'} <br><span style="color: var(--text-muted); font-size: 0.85rem; font-weight: normal;">\${item.Sub_Unit || item['Sub Unit'] || '-'}</span></td>
+                        <td>\${item.Kegiatan}</td>
+                        <td style="font-weight: 600;">\${formatRupiah(item.Nominal)}</td>
+                        <td>
+                            <div style="font-weight: 500;">\${item.Bank}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">\${item.Rekening}</div>
+                        </td>
+                        <td>\${buktiHtml}</td>
+                        <td><span class="status-badge status-\${item.Status.toLowerCase()}">\${item.Status}</span></td>
+                    </tr>
+                    \`;
+                });
+                tbody.innerHTML = html;
+            }
+            
+            document.getElementById('status-details-modal').style.display = 'flex';
         }
 
         function resetFilters() {
