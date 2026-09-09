@@ -612,7 +612,7 @@ function processParsedJagoData(transactions) {
   
   // HAPUS SEMUA DATA LAMA (Karena kita akan timpa / overwrite sepenuhnya dari PDF)
   sheet.clear();
-  sheet.clearDataValidations(); // Hapus sisa validasi lama yang mungkin nge-bug
+  sheet.getRange("H:H").clearDataValidations(); // Hapus sisa validasi lama yang mungkin nge-bug
   
   var headers = ["Date & Time", "Source/Destination", "Transaction Details", "Notes", "Kas Masuk", "Kas Keluar", "Balance", "Unit"];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
