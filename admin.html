@@ -1136,7 +1136,7 @@
                 
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
-                    if (result.months && result.months.length > 0 && filterSelect) {
+                    if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
                         const currentVal = filterSelect.value || result.currentMonth;
                         filterSelect.innerHTML = '';
                         result.months.forEach(m => {
@@ -1537,7 +1537,7 @@
                 
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
-                    if (result.months && result.months.length > 0 && filterSelect) {
+                    if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
                         const currentVal = filterSelect.value || result.currentMonth;
                         filterSelect.innerHTML = '';
                         result.months.forEach(m => {
