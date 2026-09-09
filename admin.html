@@ -1022,24 +1022,21 @@
             parsedData.sort((a,b) => b.date - a.date);
             
             let targetMonthYear = selectedMonthStr;
-            if (!targetMonthYear || targetMonthYear === 'Semua Bulan') {
-                targetMonthYear = parsedData[0].monthYear;
+            let isAllMonths = false;
+            
+            if (!targetMonthYear || targetMonthYear === 'Semua Bulan' || targetMonthYear === '') {
+                isAllMonths = true;
+                targetMonthYear = 'Keseluruhan Waktu';
             }
             
-            let currentMonthData = parsedData.filter(d => d.monthYear === targetMonthYear);
+            let currentMonthData = isAllMonths ? parsedData : parsedData.filter(d => d.monthYear === targetMonthYear);
             if (currentMonthData.length === 0) currentMonthData = parsedData; // Fallback
-            
-            let targetDate = currentMonthData[0].date;
-            let prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 15);
-            const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            let prevMonthYear = monthsId[prevMonthDate.getMonth()] + ' ' + prevMonthDate.getFullYear();
-            
-            let prevMonthData = parsedData.filter(d => d.monthYear === prevMonthYear);
             
             let totalMasuk = 0;
             let totalKeluar = 0;
             let unitMap = {};
             let categoryMap = {};
+            let monthlyExpenseMap = {};
             
             currentMonthData.forEach(d => {
                 totalMasuk += d.masuk;
@@ -1049,6 +1046,11 @@
                     unitMap[d.unit] += d.keluar;
                     if (!categoryMap[d.category]) categoryMap[d.category] = 0;
                     categoryMap[d.category] += d.keluar;
+                    
+                    if (isAllMonths) {
+                        if (!monthlyExpenseMap[d.monthYear]) monthlyExpenseMap[d.monthYear] = 0;
+                        monthlyExpenseMap[d.monthYear] += d.keluar;
+                    }
                 }
             });
             
@@ -1074,33 +1076,57 @@
             
             let categoryPct = totalKeluar > 0 ? Math.round((biggestCategoryTotal / totalKeluar) * 100) : 0;
             
-            let prevTotalKeluar = 0;
-            prevMonthData.forEach(d => prevTotalKeluar += d.keluar);
+            let diffHtml = "";
             
-            let diffText = "";
-            let diffColor = "var(--text-main)";
-            let prevMonthName = prevMonthYear.split(' ')[0];
-            
-            if (prevTotalKeluar > 0) {
-                let diff = totalKeluar - prevTotalKeluar;
-                let pct = Math.abs(Math.round((diff / prevTotalKeluar) * 100));
-                if (diff > 0) {
-                    diffText = `Terdapat kenaikan pengeluaran sebesar ${pct}%`;
-                    diffColor = "var(--danger-color)";
-                } else if (diff < 0) {
-                    diffText = `Terdapat penurunan pengeluaran sebesar ${pct}%`;
-                    diffColor = "var(--success-color)";
-                } else {
-                    diffText = `Pengeluaran sama persis`;
+            if (isAllMonths) {
+                let highestMonth = '-';
+                let highestExpense = 0;
+                for (let m in monthlyExpenseMap) {
+                    if (monthlyExpenseMap[m] > highestExpense) {
+                        highestExpense = monthlyExpenseMap[m];
+                        highestMonth = m;
+                    }
                 }
+                diffHtml = `<li>Bulan dengan rekor pengeluaran tertinggi adalah <b>${highestMonth}</b> (mencapai Rp ${highestExpense.toLocaleString('id-ID')}).</li>`;
             } else {
-                diffText = `Belum ada data pembanding`;
-                prevMonthName = "bulan sebelumnya";
+                let targetDate = currentMonthData[0].date;
+                let prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 15);
+                const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                let prevMonthYear = monthsId[prevMonthDate.getMonth()] + ' ' + prevMonthDate.getFullYear();
+                
+                let prevMonthData = parsedData.filter(d => d.monthYear === prevMonthYear);
+                let prevTotalKeluar = 0;
+                prevMonthData.forEach(d => prevTotalKeluar += d.keluar);
+                
+                let diffText = "";
+                let diffColor = "var(--text-main)";
+                let prevMonthName = prevMonthYear.split(' ')[0];
+                
+                if (prevTotalKeluar > 0) {
+                    let diff = totalKeluar - prevTotalKeluar;
+                    let pct = Math.abs(Math.round((diff / prevTotalKeluar) * 100));
+                    if (diff > 0) {
+                        diffText = `Terdapat kenaikan pengeluaran sebesar ${pct}%`;
+                        diffColor = "var(--danger-color)";
+                    } else if (diff < 0) {
+                        diffText = `Terdapat penurunan pengeluaran sebesar ${pct}%`;
+                        diffColor = "var(--success-color)";
+                    } else {
+                        diffText = `Pengeluaran sama persis`;
+                    }
+                } else {
+                    diffText = `Belum ada data pembanding`;
+                    prevMonthName = "bulan sebelumnya";
+                }
+                
+                diffHtml = `<li><span style="color: ${diffColor};">${diffText}</span> dibandingkan bulan sebelumnya (${prevMonthName}).</li>`;
             }
             
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
             const gradientBg = isLight ? 'linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent)' : 'linear-gradient(to right, rgba(239, 68, 68, 0.15), rgba(31, 41, 55, 0))';
             
+            const periodText = isAllMonths ? 'Keseluruhan Waktu' : targetMonthYear.split(' ')[0];
+
             const html = `
                 <div style="background: ${gradientBg}; border-left: 4px solid var(--danger-color); border-radius: 8px; padding: 1.5rem; color: var(--text-main); margin-top: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; font-weight: 700; font-size: 1.2rem;">
@@ -1110,12 +1136,12 @@
                         AI Insight
                     </div>
                     <p style="margin-bottom: 1.25rem; line-height: 1.6; font-size: 1.05rem;">
-                        Pada periode <b>${targetMonthYear.split(' ')[0]}</b>, tercatat kas masuk sebesar <b>${formatRupiah(totalMasuk)}</b> dan kas keluar sebesar <b>${formatRupiah(totalKeluar)}</b>. Sisa saldo operasional adalah <b>${formatRupiah(saldo)}</b>.
+                        Pada periode <b>${periodText}</b>, tercatat kas masuk sebesar <b>${formatRupiah(totalMasuk)}</b> dan kas keluar sebesar <b>${formatRupiah(totalKeluar)}</b>. Sisa saldo operasional adalah <b>${formatRupiah(saldo)}</b>.
                     </p>
                     <ul style="margin: 0; padding-left: 1.25rem; line-height: 1.8; font-size: 1.05rem;">
                         <li>Pengeluaran terbesar dialokasikan untuk unit <b>${biggestUnit}</b> senilai Rp ${biggestUnitTotal.toLocaleString('id-ID')}.</li>
                         <li>Dilihat dari jenisnya, kategori <b>${biggestCategory}</b> mendominasi sebesar <b>${categoryPct}%</b> dari total pengeluaran.</li>
-                        <li><span style="color: ${diffColor};">${diffText}</span> dibandingkan bulan sebelumnya (${prevMonthName}).</li>
+                        ${diffHtml}
                     </ul>
                 </div>
             `;
