@@ -13,26 +13,26 @@
     --danger-color: #ef4444;
     --danger-light: rgba(239, 68, 68, 0.15);
     
-    /* Dark Theme Variables (Minimalist) */
-    --bg-mesh-1: #0b1120;
-    --bg-mesh-2: #0f172a;
-    --bg-mesh-3: #1e293b;
+    /* Dark Theme Variables (Matching Logo 3D Glassmorphism) */
+    --bg-mesh-1: #090514;
+    --bg-mesh-2: #140b2a;
+    --bg-mesh-3: #22123d;
     
     --text-main: #ffffff;
     --text-muted: #cbd5e1;
     
-    --bg-sidebar: rgba(15, 23, 42, 0.6);
+    --bg-sidebar: rgba(15, 8, 30, 0.65);
     --brand-text-1: #ffffff;
-    --brand-text-2: #cbd5e1;
+    --brand-text-2: #d946ef;
     
-    --bg-glass: rgba(255, 255, 255, 0.1);
-    --border-glass: rgba(255, 255, 255, 0.15);
-    --bg-input: rgba(0, 0, 0, 0.2);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+    --bg-glass: rgba(255, 255, 255, 0.05);
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --bg-input: rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(217, 70, 239, 0.3);
     
-    --nav-hover: rgba(255, 255, 255, 0.1);
+    --nav-hover: rgba(217, 70, 239, 0.15);
     --text-input: #ffffff;
-    --icon-color: #818cf8;
+    --icon-color: #00f0ff;
 }
 
 [data-theme="light"] {
@@ -104,7 +104,7 @@ body::before, body::after {
 body::before {
     width: 400px;
     height: 400px;
-    background: rgba(99, 102, 241, 0.4);
+    background: rgba(217, 70, 239, 0.25); /* Neon Purple */
     top: -100px;
     left: -100px;
 }
@@ -112,7 +112,7 @@ body::before {
 body::after {
     width: 300px;
     height: 300px;
-    background: rgba(16, 185, 129, 0.3);
+    background: rgba(0, 240, 255, 0.2); /* Neon Blue */
     bottom: -50px;
     right: -50px;
     animation-delay: -5s;
