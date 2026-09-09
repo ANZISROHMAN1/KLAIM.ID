@@ -777,6 +777,12 @@
 
         async function fetchInsights() {
             try {
+                if (window.rawJagoData) {
+                    generateInsightsFromJago(window.rawJagoData);
+                    renderTrendChart(window.rawJagoData);
+                    return;
+                }
+                
                 // Fetch ALL raw jago data to compute insights over time without current month filter
                 const response = await fetch(SCRIPT_URL + '?action=debug_jago');
                 const result = await response.json();
@@ -1149,6 +1155,7 @@
             document.getElementById('ai-insights-container').innerHTML = html;
         }
         
+        const reportJagoCache = {};
         async function fetchJagoData() {
             try {
                 const filterSelect = document.getElementById('global-month-filter');
@@ -1157,8 +1164,14 @@
                     monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
                 }
                 
-                const response = await fetch(SCRIPT_URL + '?action=jago_data' + monthParam);
-                const result = await response.json();
+                let result;
+                if (reportJagoCache[monthParam]) {
+                    result = reportJagoCache[monthParam];
+                } else {
+                    const response = await fetch(SCRIPT_URL + '?action=jago_data' + monthParam);
+                    result = await response.json();
+                    if (result.success) reportJagoCache[monthParam] = result;
+                }
                 
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
@@ -1550,6 +1563,7 @@
             }
         }
 
+        const reportNeracaCache = {};
         async function fetchNeracaData() {
             try {
                 const filterSelect = document.getElementById('global-month-filter');
@@ -1558,8 +1572,14 @@
                     monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
                 }
                 
-                const response = await fetch(`${SCRIPT_URL}?action=neraca_data${monthParam}`);
-                const result = await response.json();
+                let result;
+                if (reportNeracaCache[monthParam]) {
+                    result = reportNeracaCache[monthParam];
+                } else {
+                    const response = await fetch(`${SCRIPT_URL}?action=neraca_data${monthParam}`);
+                    result = await response.json();
+                    if (result.success) reportNeracaCache[monthParam] = result;
+                }
                 
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
