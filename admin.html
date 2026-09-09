@@ -537,7 +537,7 @@
             
             const tbody = document.getElementById('status-details-body');
             if (filtered.length === 0) {
-                tbody.innerHTML = \`<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>\`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 let html = '';
                 filtered.forEach(item => {
@@ -545,25 +545,25 @@
                     if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
                     
                     let buktiHtml = '';
-                    if (item.Bukti_Path) buktiHtml += \`<a href="\${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>\`;
-                    if (item.Bukti_TF_Path) buktiHtml += \`<br><a href="\${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>\`;
+                    if (item.Bukti_Path) buktiHtml += `<a href="${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>`;
+                    if (item.Bukti_TF_Path) buktiHtml += `<br><a href="${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>`;
 
-                    html += \`
+                    html += `
                     <tr>
-                        <td>#\${item.ID}</td>
-                        <td>\${dateStr}</td>
-                        <td style="font-weight: 500;">\${item.Nama}</td>
-                        <td style="font-weight: 500;">\${item.Unit || '-'} <br><span style="color: var(--text-muted); font-size: 0.85rem; font-weight: normal;">\${item.Sub_Unit || item['Sub Unit'] || '-'}</span></td>
-                        <td>\${item.Kegiatan}</td>
-                        <td style="font-weight: 600;">\${formatRupiah(item.Nominal)}</td>
+                        <td>#${item.ID}</td>
+                        <td>${dateStr}</td>
+                        <td style="font-weight: 500;">${item.Nama}</td>
+                        <td style="font-weight: 500;">${item.Unit || '-'} <br><span style="color: var(--text-muted); font-size: 0.85rem; font-weight: normal;">${item.Sub_Unit || item['Sub Unit'] || '-'}</span></td>
+                        <td>${item.Kegiatan}</td>
+                        <td style="font-weight: 600;">${formatRupiah(item.Nominal)}</td>
                         <td>
-                            <div style="font-weight: 500;">\${item.Bank}</div>
-                            <div style="font-size: 0.85rem; color: var(--text-muted);">\${item.Rekening}</div>
+                            <div style="font-weight: 500;">${item.Bank}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">${item.Rekening}</div>
                         </td>
-                        <td>\${buktiHtml}</td>
-                        <td><span class="status-badge status-\${item.Status.toLowerCase()}">\${item.Status}</span></td>
+                        <td>${buktiHtml}</td>
+                        <td><span class="status-badge status-${item.Status.toLowerCase()}">${item.Status}</span></td>
                     </tr>
-                    \`;
+                    `;
                 });
                 tbody.innerHTML = html;
             }
