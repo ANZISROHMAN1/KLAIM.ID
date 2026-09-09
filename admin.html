@@ -1000,22 +1000,22 @@
                 insight3 = `Pengeluaran terbesar sampai dengan hari ini adalah dari unit <b>${biggestUnitAllTime}</b> dengan total <b>${formatRupiah(biggestUnitAllTimeTotal)}</b>.`;
             }
             
-            const html = \`
+            const html = `
                 <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="\${i1Icon}" style="color: \${i1Color}; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">\${insight1}</div>
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="${i1Icon}" style="color: ${i1Color}; font-size: 1.25rem;"></i></div>
+                    <div style="align-self: center;">${insight1}</div>
                 </div>
                 <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
                     <div style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="ri-pie-chart-2-line" style="color: #3b82f6; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">\${insight2}</div>
+                    <div style="align-self: center;">${insight2}</div>
                 </div>
-                \${insight3 ? \`
+                ${insight3 ? `
                 <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
                     <div style="background: rgba(245, 158, 11, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="ri-medal-line" style="color: #f59e0b; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">\${insight3}</div>
+                    <div style="align-self: center;">${insight3}</div>
                 </div>
-                \` : ''}
-            \`;
+                ` : ''}
+            `;
             
             document.getElementById('ai-insights-container').innerHTML = html;
         }
