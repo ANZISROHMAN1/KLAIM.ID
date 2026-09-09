@@ -161,6 +161,12 @@
                             <input type="date" id="filter-start" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Tanggal Mulai">
                             <span style="color: var(--text-muted);">sampai</span>
                             <input type="date" id="filter-end" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Tanggal Akhir">
+                            <select id="filter-limit" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;" title="Batas Data" onchange="applyFilters()">
+                                <option value="10">Top 10</option>
+                                <option value="25">Top 25</option>
+                                <option value="50">Top 50</option>
+                                <option value="all">Semua</option>
+                            </select>
                             <button onclick="applyFilters()" class="btn btn-sm btn-primary"><i class="ri-filter-3-line"></i> Filter</button>
                             <button onclick="resetFilters()" class="btn btn-sm" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);"><i class="ri-refresh-line"></i> Refresh</button>
                         </div>
@@ -492,6 +498,7 @@
             document.getElementById('filter-end').value = '';
             if (document.getElementById('filter-unit')) document.getElementById('filter-unit').value = 'all';
             if (document.getElementById('filter-sub-unit')) document.getElementById('filter-sub-unit').value = '';
+            if (document.getElementById('filter-limit')) document.getElementById('filter-limit').value = '10';
             currentStatusFilter = 'all';
             fetchData();
         }
@@ -539,6 +546,13 @@
                     }
                 });
             }
+            
+            // 4. Limit Results (Top 10 by default)
+            const limitVal = document.getElementById('filter-limit') ? document.getElementById('filter-limit').value : '10';
+            if (limitVal !== 'all') {
+                filtered = filtered.slice(0, parseInt(limitVal, 10));
+            }
+            
             renderTable(filtered);
             // updateFinancialReport is no longer called here, as it will be populated by Jago data
         }
