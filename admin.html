@@ -869,152 +869,163 @@
         
         function generateInsightsFromJago(data) {
             if (data.length < 2) {
-                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 0.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted);">Belum ada data cukup untuk dianalisis.</div>`;
+                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada data cukup untuk dianalisis.</div>`;
                 return;
             }
+            
+            const filterSelect = document.getElementById('global-month-filter');
+            const selectedMonthStr = filterSelect ? filterSelect.value : 'Semua Bulan';
             
             const headerRow = data[0];
             const isSplitCols = (headerRow.length >= 8) || 
                               (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
                               (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
             
-            const expenses = [];
-            const CUTOFF_DATE = new Date(2026, 6, 30); // 30 Juli 2026
+            const CUTOFF_DATE = new Date(2026, 6, 30);
             
+            const parsedData = [];
             for (let i = 1; i < data.length; i++) {
                 let rowDate = parseDateSafeClient(data[i][0]);
                 if (!rowDate || rowDate < CUTOFF_DATE) continue;
                 
-                let expense = 0;
+                let monthYear = '';
+                try {
+                    const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                    monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
+                } catch(e) {}
+                
+                let masuk = 0;
+                let keluar = 0;
                 let unit = 'Lainnya';
+                let categoryRaw = '';
                 
                 if (isSplitCols) {
-                    let keluar = parseFloat(data[i][5]) || 0;
-                    if (keluar > 0) expense = keluar;
-                    unit = data[i][7] || 'Lainnya';
+                    masuk = parseFloat(data[i][4]) || 0;
+                    keluar = parseFloat(data[i][5]) || 0;
+                    unit = data[i][7] || 'Tanpa Unit';
+                    categoryRaw = (data[i][2] || '').toString().toLowerCase();
                 } else {
                     let amount = parseFloat(data[i][4]) || 0;
-                    if (amount < 0) expense = Math.abs(amount);
-                    unit = data[i][6] || 'Lainnya';
+                    if (amount > 0) masuk = amount;
+                    else if (amount < 0) keluar = Math.abs(amount);
+                    unit = data[i][6] || 'Tanpa Unit';
+                    categoryRaw = (data[i][2] || '').toString().toLowerCase();
                 }
                 
-                if (expense > 0) {
-                    expenses.push({
-                        date: rowDate,
-                        amount: expense,
-                        unit: unit
-                    });
-                }
+                let category = 'Lainnya';
+                if (categoryRaw.includes('top up')) category = 'Top Up';
+                else if (categoryRaw.includes('transfer')) category = 'Transfer';
+                else if (categoryRaw.includes('qris')) category = 'QRIS';
+                else if (categoryRaw.includes('biaya') || categoryRaw.includes('admin') || categoryRaw.includes('fee')) category = 'Biaya Admin';
+                else if (categoryRaw.includes('tarik tunai')) category = 'Tarik Tunai';
+                
+                parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category });
             }
             
-            if (expenses.length === 0) {
-                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 0.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted);">Belum ada pengeluaran yang tercatat untuk dianalisa.</div>`;
+            if (parsedData.length === 0) {
+                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada transaksi valid untuk dianalisa.</div>`;
                 return;
             }
             
-            // Urutkan dari terbaru ke terlama untuk mencari bulan terkini di data
-            expenses.sort((a, b) => b.date - a.date);
-            const latestDate = expenses[0].date;
+            parsedData.sort((a,b) => b.date - a.date);
             
-            const currentMonth = latestDate.getMonth();
-            const currentYear = latestDate.getFullYear();
+            let targetMonthYear = selectedMonthStr;
+            if (!targetMonthYear || targetMonthYear === 'Semua Bulan') {
+                targetMonthYear = parsedData[0].monthYear;
+            }
             
-            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-            const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            let currentMonthData = parsedData.filter(d => d.monthYear === targetMonthYear);
+            if (currentMonthData.length === 0) currentMonthData = parsedData; // Fallback
             
-            let thisMonthTotal = 0;
-            let lastMonthTotal = 0;
+            let targetDate = currentMonthData[0].date;
+            let prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 15);
+            const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            let prevMonthYear = monthsId[prevMonthDate.getMonth()] + ' ' + prevMonthDate.getFullYear();
             
-            const unitTotalsThisMonth = {};
-            const unitTotalsAllTime = {};
+            let prevMonthData = parsedData.filter(d => d.monthYear === prevMonthYear);
             
-            for (let e of expenses) {
-                let m = e.date.getMonth();
-                let y = e.date.getFullYear();
-                
-                if (!unitTotalsAllTime[e.unit]) unitTotalsAllTime[e.unit] = 0;
-                unitTotalsAllTime[e.unit] += e.amount;
-                
-                if (m === currentMonth && y === currentYear) {
-                    thisMonthTotal += e.amount;
-                    if (!unitTotalsThisMonth[e.unit]) unitTotalsThisMonth[e.unit] = 0;
-                    unitTotalsThisMonth[e.unit] += e.amount;
-                } else if (m === lastMonth && y === lastMonthYear) {
-                    lastMonthTotal += e.amount;
+            let totalMasuk = 0;
+            let totalKeluar = 0;
+            let unitMap = {};
+            let categoryMap = {};
+            
+            currentMonthData.forEach(d => {
+                totalMasuk += d.masuk;
+                totalKeluar += d.keluar;
+                if (d.keluar > 0) {
+                    if (!unitMap[d.unit]) unitMap[d.unit] = 0;
+                    unitMap[d.unit] += d.keluar;
+                    if (!categoryMap[d.category]) categoryMap[d.category] = 0;
+                    categoryMap[d.category] += d.keluar;
+                }
+            });
+            
+            let saldo = totalMasuk - totalKeluar;
+            
+            let biggestUnit = 'Tanpa Unit';
+            let biggestUnitTotal = 0;
+            for (let u in unitMap) {
+                if (unitMap[u] > biggestUnitTotal) {
+                    biggestUnitTotal = unitMap[u];
+                    biggestUnit = u;
                 }
             }
             
-            let insight1 = "";
-            let i1Icon = "ri-funds-line";
-            let i1Color = "var(--text-main)";
+            let biggestCategory = 'Lainnya';
+            let biggestCategoryTotal = 0;
+            for (let c in categoryMap) {
+                if (categoryMap[c] > biggestCategoryTotal) {
+                    biggestCategoryTotal = categoryMap[c];
+                    biggestCategory = c;
+                }
+            }
             
-            if (lastMonthTotal > 0) {
-                let diff = thisMonthTotal - lastMonthTotal;
-                let percent = Math.abs((diff / lastMonthTotal) * 100).toFixed(1);
-                if (diff < 0) {
-                    insight1 = `Pengeluaran <span style="font-weight:700;color:var(--success-color);">turun ${percent}%</span> dari bulan lalu.`;
-                    i1Icon = "ri-arrow-right-down-line";
-                    i1Color = "var(--success-color)";
-                } else if (diff > 0) {
-                    insight1 = `Pengeluaran <span style="font-weight:700;color:var(--danger-color);">naik ${percent}%</span> dari bulan lalu.`;
-                    i1Icon = "ri-arrow-right-up-line";
-                    i1Color = "var(--danger-color)";
+            let categoryPct = totalKeluar > 0 ? Math.round((biggestCategoryTotal / totalKeluar) * 100) : 0;
+            
+            let prevTotalKeluar = 0;
+            prevMonthData.forEach(d => prevTotalKeluar += d.keluar);
+            
+            let diffText = "";
+            let diffColor = "var(--text-main)";
+            let prevMonthName = prevMonthYear.split(' ')[0];
+            
+            if (prevTotalKeluar > 0) {
+                let diff = totalKeluar - prevTotalKeluar;
+                let pct = Math.abs(Math.round((diff / prevTotalKeluar) * 100));
+                if (diff > 0) {
+                    diffText = `Terdapat kenaikan pengeluaran sebesar ${pct}%`;
+                    diffColor = "var(--danger-color)";
+                } else if (diff < 0) {
+                    diffText = `Terdapat penurunan pengeluaran sebesar ${pct}%`;
+                    diffColor = "var(--success-color)";
                 } else {
-                    insight1 = `Pengeluaran sama persis dengan bulan lalu.`;
-                    i1Icon = "ri-funds-line";
+                    diffText = `Pengeluaran sama persis`;
                 }
             } else {
-                insight1 = `Belum ada cukup data bulan sebelumnya untuk menganalisis tren persentase.`;
-                i1Icon = "ri-information-line";
-                i1Color = "var(--text-muted)";
+                diffText = `Belum ada data pembanding`;
+                prevMonthName = "bulan sebelumnya";
             }
             
-            let biggestUnitThisMonth = "";
-            let biggestUnitThisMonthTotal = 0;
-            for (let u in unitTotalsThisMonth) {
-                if (unitTotalsThisMonth[u] > biggestUnitThisMonthTotal) {
-                    biggestUnitThisMonthTotal = unitTotalsThisMonth[u];
-                    biggestUnitThisMonth = u;
-                }
-            }
-            
-            let insight2 = "";
-            if (biggestUnitThisMonth !== "") {
-                let pct = ((biggestUnitThisMonthTotal / thisMonthTotal) * 100).toFixed(1);
-                insight2 = `Unit <b>${biggestUnitThisMonth}</b> merupakan pengeluaran terbesar pada bulan ini (<b>${pct}%</b> dari total pengeluaran).`;
-            } else {
-                insight2 = `Belum ada pengeluaran yang tercatat pada bulan ini.`;
-            }
-            
-            let biggestUnitAllTime = "";
-            let biggestUnitAllTimeTotal = 0;
-            for (let u in unitTotalsAllTime) {
-                if (unitTotalsAllTime[u] > biggestUnitAllTimeTotal) {
-                    biggestUnitAllTimeTotal = unitTotalsAllTime[u];
-                    biggestUnitAllTime = u;
-                }
-            }
-            
-            let insight3 = "";
-            if (biggestUnitAllTime !== "") {
-                insight3 = `Pengeluaran terbesar sampai dengan hari ini adalah dari unit <b>${biggestUnitAllTime}</b> dengan total <b>${formatRupiah(biggestUnitAllTimeTotal)}</b>.`;
-            }
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            const gradientBg = isLight ? 'linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent)' : 'linear-gradient(to right, rgba(239, 68, 68, 0.15), rgba(31, 41, 55, 0))';
             
             const html = `
-                <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="${i1Icon}" style="color: ${i1Color}; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">${insight1}</div>
+                <div style="background: ${gradientBg}; border-left: 4px solid var(--danger-color); border-radius: 8px; padding: 1.5rem; color: var(--text-main); margin-top: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; font-weight: 700; font-size: 1.2rem;">
+                        <div style="background: var(--danger-color); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">
+                            <i class="ri-flashlight-fill"></i>
+                        </div>
+                        AI Insight
+                    </div>
+                    <p style="margin-bottom: 1.25rem; line-height: 1.6; font-size: 1.05rem;">
+                        Pada periode <b>${targetMonthYear.split(' ')[0]}</b>, tercatat kas masuk sebesar <b>${formatRupiah(totalMasuk)}</b> dan kas keluar sebesar <b>${formatRupiah(totalKeluar)}</b>. Sisa saldo operasional adalah <b>${formatRupiah(saldo)}</b>.
+                    </p>
+                    <ul style="margin: 0; padding-left: 1.25rem; line-height: 1.8; font-size: 1.05rem;">
+                        <li>Pengeluaran terbesar dialokasikan untuk unit <b>${biggestUnit}</b> senilai Rp ${biggestUnitTotal.toLocaleString('id-ID')}.</li>
+                        <li>Dilihat dari jenisnya, kategori <b>${biggestCategory}</b> mendominasi sebesar <b>${categoryPct}%</b> dari total pengeluaran.</li>
+                        <li><span style="color: ${diffColor};">${diffText}</span> dibandingkan bulan sebelumnya (${prevMonthName}).</li>
+                    </ul>
                 </div>
-                <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="ri-pie-chart-2-line" style="color: #3b82f6; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">${insight2}</div>
-                </div>
-                ${insight3 ? `
-                <div style="display: flex; align-items: flex-start; gap: 1rem; padding: 0.8rem 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="background: rgba(245, 158, 11, 0.1); padding: 0.5rem; border-radius: 8px; display: flex;"><i class="ri-medal-line" style="color: #f59e0b; font-size: 1.25rem;"></i></div>
-                    <div style="align-self: center;">${insight3}</div>
-                </div>
-                ` : ''}
             `;
             
             document.getElementById('ai-insights-container').innerHTML = html;
