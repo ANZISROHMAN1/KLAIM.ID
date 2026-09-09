@@ -294,7 +294,7 @@ function formatTransactions(sheet) {
     // Kolom H (8): Unit Dropdown
     var unitRange = sheet.getRange(2, 8, lastRow - 1, 1);
     var unitRule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(["District", "BGES MBB", "OSP", "ISP", "FBB", "HI"])
+      .requireValueInList(["District", "BGES & MBB", "OSP", "ISP", "FBB", "HAI"])
       .build();
     unitRange.setDataValidation(unitRule);
   } else {
@@ -612,6 +612,7 @@ function processParsedJagoData(transactions) {
   
   // HAPUS SEMUA DATA LAMA (Karena kita akan timpa / overwrite sepenuhnya dari PDF)
   sheet.clear();
+  sheet.clearDataValidations(); // Hapus sisa validasi lama yang mungkin nge-bug
   
   var headers = ["Date & Time", "Source/Destination", "Transaction Details", "Notes", "Kas Masuk", "Kas Keluar", "Balance", "Unit"];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -623,8 +624,8 @@ function processParsedJagoData(transactions) {
     if (text.includes("district")) return "District";
     if (text.includes("osp")) return "OSP";
     if (text.includes("isp")) return "ISP";
-    if (text.includes("hai") || text.includes("hi")) return "HI";
-    if (text.includes("bges") || text.includes("mbb")) return "BGES MBB";
+    if (text.includes("hai") || text.includes("hi")) return "HAI";
+    if (text.includes("bges") || text.includes("mbb")) return "BGES & MBB";
     if (text.includes("fbb")) return "FBB";
     return ""; // KOSONGKAN jika tidak dikenali agar tidak error validasi data
   }
