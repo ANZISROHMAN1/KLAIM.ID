@@ -824,14 +824,32 @@ function updateNeracaKeuangan() {
   neracaSheet.getRange("E1").setValue("Filter Bulan:").setFontWeight("bold");
   neracaSheet.getRange("E2").setDataValidation(rule).setBackground("#fef08a");
   
+  // --- MULAI PERBAIKAN LOGIKA SALDO AWAL & MTD ---
+  
+  // 1. Pastikan allValidData diurutkan secara KRONOLOGIS (Terlama ke Terbaru)
+  allValidData.sort(function(a, b) {
+      return a.date.getTime() - b.date.getTime();
+  });
+  
   var filteredData = [];
+  var lastBalanceBeforeMTD = 0;
+  var hasFoundMTD = false;
+  
   for (var i = 0; i < allValidData.length; i++) {
       var item = allValidData[i];
       var monthYear = Utilities.formatDate(item.date, Session.getScriptTimeZone(), "MMMM yyyy");
       monthYear = monthYear.replace('January', 'Januari').replace('February', 'Februari').replace('March', 'Maret').replace('May', 'Mei').replace('June', 'Juni').replace('July', 'Juli').replace('August', 'Agustus').replace('October', 'Oktober').replace('December', 'Desember');
       
-      if (selectedFilter === "Semua Bulan" || monthYear === selectedFilter) {
+      var isTargetMonth = (selectedFilter === "Semua Bulan" || monthYear === selectedFilter);
+      
+      if (isTargetMonth) {
           filteredData.push(item);
+          hasFoundMTD = true;
+      } else {
+          // Selama kita belum menemukan bulan MTD, update terus saldo terakhir bulan N-1
+          if (!hasFoundMTD) {
+              lastBalanceBeforeMTD = item.balance;
+          }
       }
   }
   
@@ -841,80 +859,16 @@ function updateNeracaKeuangan() {
       return; 
   }
   
-  var isNewestToOldest = false;
-  if (filteredData.length >= 2) {
-      for (var i = 0; i < filteredData.length - 1; i++) {
-          var b0 = filteredData[i].balance;
-          var b1 = filteredData[i+1].balance;
-          var a0 = Math.abs(filteredData[i].rawAmount);
-          var a1 = Math.abs(filteredData[i+1].rawAmount);
-          
-          if (Math.abs(a0 - a1) > 1) {
-              if (a0 > 0 && Math.abs(Math.abs(b0 - b1) - a0) < 1) {
-                  isNewestToOldest = true; 
-                  break;
-              }
-              if (a1 > 0 && Math.abs(Math.abs(b1 - b0) - a1) < 1) {
-                  isNewestToOldest = false;
-                  break;
-              }
-          }
-      }
-  }
-
-  var trueAmounts = new Array(filteredData.length).fill(0);
-  for (var i = 0; i < filteredData.length; i++) {
-      var rawAmount = filteredData[i].rawAmount;
-      var currentBalance = filteredData[i].balance;
-      var trueAmt = rawAmount; // default
-      var amountMag = Math.abs(rawAmount);
-      
-      if (isNewestToOldest && i + 1 < filteredData.length) {
-          var olderBalance = filteredData[i+1].balance;
-          if (currentBalance > 0 && olderBalance > 0) {
-              var diff = currentBalance - olderBalance;
-              if (Math.abs(Math.abs(diff) - amountMag) < 1) {
-                  trueAmt = diff;
-              } else if (diff < 0 && rawAmount > 0) {
-                  trueAmt = -amountMag;
-              } else if (diff > 0 && rawAmount < 0) {
-                  trueAmt = amountMag;
-              }
-          }
-      } else if (!isNewestToOldest && i > 0) {
-          var olderBalance = filteredData[i-1].balance;
-          if (currentBalance > 0 && olderBalance > 0) {
-              var diff = currentBalance - olderBalance;
-              if (Math.abs(Math.abs(diff) - amountMag) < 1) {
-                  trueAmt = diff;
-              } else if (diff < 0 && rawAmount > 0) {
-                  trueAmt = -amountMag;
-              } else if (diff > 0 && rawAmount < 0) {
-                  trueAmt = amountMag;
-              }
-          }
-      }
-      
-      trueAmounts[i] = trueAmt;
-  }
-  
-  // Saldo Awal dan Saldo Akhir
+  // 2. Tentukan Saldo Awal MTD
   var saldoAwal = 0;
-  var saldoAkhir = 0;
-  
-  if (isNewestToOldest) {
-      for (var i = filteredData.length - 1; i >= 0; i--) {
-          if (filteredData[i].balance > 0) {
-              saldoAwal = filteredData[i].balance - trueAmounts[i];
-              break;
-          }
-      }
+  if (selectedFilter === "Semua Bulan") {
+      saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
   } else {
-      for (var i = 0; i < filteredData.length; i++) {
-          if (filteredData[i].balance > 0) {
-              saldoAwal = filteredData[i].balance - trueAmounts[i];
-              break;
-          }
+      if (lastBalanceBeforeMTD !== 0) {
+          saldoAwal = lastBalanceBeforeMTD; // Mengambil saldo akhir bulan N-1 dengan akurat
+      } else {
+          // Fallback jika tidak ada histori bulan N-1 di data Jago
+          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
       }
   }
   
@@ -922,8 +876,9 @@ function updateNeracaKeuangan() {
   var totalDebit = 0;
   var totalKredit = 0;
   
+  // 3. Pemasukan dan Pengeluaran hanya menggunakan arus kas (rawAmount) dari bulan MTD
   for (var i = 0; i < filteredData.length; i++) {
-    var amount = trueAmounts[i];
+    var amount = filteredData[i].rawAmount;
     var unit = filteredData[i].unit;
     if (!unit || unit.toString().trim() === '') {
       unit = 'Tanpa Unit';
