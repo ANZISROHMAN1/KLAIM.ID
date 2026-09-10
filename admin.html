@@ -801,9 +801,10 @@
                 });
             }
         } 
-        function fetchReportData() {
+        async function fetchReportData() {
             fetchJagoData();
-            fetchNeracaData();
+            await fetchNeracaData(); // Wait for dropdown to be populated with current month
+            
             fetchInsights().then(() => {
                 fetchPlanningData();
             });
