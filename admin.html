@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klaim.id - Dashboard Admin</title>
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -74,9 +76,9 @@
             <div class="logo"
                 style="display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass); margin-bottom: 1.5rem;">
                 <img src="logo.jpg" alt="KLAIM.ID Logo"
-                    style="height: 45px; width: 45px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 15px rgba(217, 70, 239, 0.5);">
+                    style="height: 45px; width: 45px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);">
                 <span
-                    style="font-size: 1.4rem; font-weight: 800; background: linear-gradient(90deg, #00f0ff, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px;">KLAIM.ID</span>
+                    style="font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem; font-weight: 800; background: linear-gradient(90deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px;">KLAIM.ID</span>
             </div>
             <ul class="nav-links">
                 <li>
@@ -1005,14 +1007,14 @@
             if (data.length === 0) {
                 addPlanRow(); // Add one empty row by default
             } else {
-                data.forEach(item => addPlanRow(item.desc, item.amount));
+                data.forEach(item => addPlanRow(item.desc, item.unit, item.ket, item.amount));
             }
 
             calculatePlanTotal();
             document.getElementById('planning-modal').style.display = 'flex';
         }
 
-        function addPlanRow(desc = '', amount = '') {
+        function addPlanRow(desc = '', unit = '', ket = '', amount = '') {
             const container = document.getElementById('planning-rows-container');
             const row = document.createElement('div');
             row.style.display = 'flex';
@@ -1020,7 +1022,9 @@
             row.style.alignItems = 'center';
             row.innerHTML = `
                 <input type="text" class="form-control plan-desc" placeholder="Keterangan Rencana..." value="${desc}" style="flex: 2; padding: 0.75rem; background: var(--bg-main);">
-                <input type="number" class="form-control plan-amount" placeholder="Nominal (Rp)" value="${amount}" oninput="calculatePlanTotal()" style="flex: 1; padding: 0.75rem; background: var(--bg-main);">
+                <input type="text" class="form-control plan-unit" placeholder="Unit" value="${unit || ''}" style="flex: 1; padding: 0.75rem; background: var(--bg-main);">
+                <input type="text" class="form-control plan-ket" placeholder="Keterangan" value="${ket || ''}" style="flex: 2; padding: 0.75rem; background: var(--bg-main);">
+                <input type="number" class="form-control plan-amount" placeholder="Nominal (Rp)" value="${amount}" oninput="calculatePlanTotal()" style="flex: 2; padding: 0.75rem; background: var(--bg-main);">
                 <button onclick="removePlanRow(this)" class="btn btn-sm" style="background: transparent; color: var(--danger-color); padding: 0.75rem;"><i class="ri-delete-bin-line"></i></button>
             `;
             container.appendChild(row);
@@ -1060,9 +1064,11 @@
             let rows = document.getElementById('planning-rows-container').children;
             for (let i = 0; i < rows.length; i++) {
                 let desc = rows[i].querySelector('.plan-desc').value;
+                let unit = rows[i].querySelector('.plan-unit').value;
+                let ket = rows[i].querySelector('.plan-ket').value;
                 let amount = rows[i].querySelector('.plan-amount').value;
                 if (desc.trim() !== '' || amount !== '') {
-                    data.push({ desc: desc, amount: amount });
+                    data.push({ desc: desc, unit: unit, ket: ket, amount: amount });
                 }
             }
 
