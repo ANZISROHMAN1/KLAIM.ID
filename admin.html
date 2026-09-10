@@ -783,11 +783,63 @@
         function fetchReportData() {
             fetchJagoData();
             fetchNeracaData();
-            fetchInsights();
-            fetchPlanningData();
+            fetchInsights().then(() => {
+                fetchPlanningData();
+            });
         }
         
         const reportPlanningCache = {};
+        
+        function renderPlanningContent(textData, saldo) {
+            let container = document.getElementById('planning-content');
+            let data = [];
+            try {
+                if (textData) data = JSON.parse(textData);
+            } catch(e) {
+                container.innerText = textData;
+                return;
+            }
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada rencana estimasi tersimpan. Klik di sini untuk mulai mencatat.</span>';
+                return;
+            }
+            
+            let totalEstimasi = 0;
+            let html = `<table class="modern-table" style="margin-top: 0.5rem; font-size: 0.9rem;">
+                <thead><tr><th style="padding: 0.5rem; background: var(--bg-main);">Keterangan Rencana</th><th style="padding: 0.5rem; text-align: right; background: var(--bg-main);">Estimasi Budget</th></tr></thead><tbody>`;
+                
+            data.forEach(item => {
+                let amount = parseFloat(item.amount) || 0;
+                totalEstimasi += amount;
+                html += `<tr>
+                    <td style="padding: 0.5rem;">${item.desc}</td>
+                    <td style="padding: 0.5rem; text-align: right;">${formatRupiah(amount)}</td>
+                </tr>`;
+            });
+            
+            html += `</tbody></table>`;
+            
+            let sisaProyeksi = (saldo || 0) - totalEstimasi;
+            let proyeksiColor = sisaProyeksi >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+            
+            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem; background: var(--bg-main); border-radius: 6px; font-size: 0.9rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                    <span style="color: var(--text-muted);">Sisa Saldo Saat Ini</span>
+                    <strong style="color: var(--text-main);">${formatRupiah(saldo || 0)}</strong>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: center;">
+                    <span style="color: var(--text-muted);">Total Estimasi</span>
+                    <strong style="color: var(--danger-color);">${formatRupiah(totalEstimasi)}</strong>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-end;">
+                    <span style="color: var(--text-muted);">Proyeksi Akhir</span>
+                    <strong style="color: ${proyeksiColor}; font-size: 1.05rem;">${formatRupiah(sisaProyeksi)}</strong>
+                </div>
+            </div>`;
+            
+            container.innerHTML = html;
+        }
         
         async function fetchPlanningData() {
             try {
@@ -809,11 +861,7 @@
                     }
                 }
                 
-                if (textFound.trim() === '') {
-                    document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada planning tersimpan. Klik di sini untuk mulai mencatat rencana keuangan.</span>';
-                } else {
-                    document.getElementById('planning-content').innerText = textFound;
-                }
+                renderPlanningContent(textFound, window.currentAiSaldo);
             } catch (error) {
                 console.error(error);
                 document.getElementById('planning-content').innerHTML = '<span style="color: var(--danger-color);">Gagal memuat planning.</span>';
@@ -825,10 +873,58 @@
             let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
             
             document.getElementById('planning-modal-month').innerText = monthVal;
-            let currentText = reportPlanningCache[monthVal] || '';
-            document.getElementById('planning-textarea').value = currentText;
+            document.getElementById('planning-modal-saldo').innerText = formatRupiah(window.currentAiSaldo || 0);
             
+            let currentText = reportPlanningCache[monthVal] || '';
+            let data = [];
+            try { if (currentText) data = JSON.parse(currentText); } catch(e) {}
+            
+            const container = document.getElementById('planning-rows-container');
+            container.innerHTML = '';
+            
+            if (data.length === 0) {
+                addPlanRow(); // Add one empty row by default
+            } else {
+                data.forEach(item => addPlanRow(item.desc, item.amount));
+            }
+            
+            calculatePlanTotal();
             document.getElementById('planning-modal').style.display = 'flex';
+        }
+        
+        function addPlanRow(desc = '', amount = '') {
+            const container = document.getElementById('planning-rows-container');
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.gap = '0.5rem';
+            row.style.alignItems = 'center';
+            row.innerHTML = `
+                <input type="text" class="form-control plan-desc" placeholder="Keterangan Rencana..." value="${desc}" style="flex: 2; padding: 0.75rem; background: var(--bg-main);">
+                <input type="number" class="form-control plan-amount" placeholder="Nominal (Rp)" value="${amount}" oninput="calculatePlanTotal()" style="flex: 1; padding: 0.75rem; background: var(--bg-main);">
+                <button onclick="removePlanRow(this)" class="btn btn-sm" style="background: transparent; color: var(--danger-color); padding: 0.75rem;"><i class="ri-delete-bin-line"></i></button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removePlanRow(btn) {
+            btn.parentElement.remove();
+            calculatePlanTotal();
+        }
+
+        function calculatePlanTotal() {
+            let total = 0;
+            document.querySelectorAll('.plan-amount').forEach(input => {
+                let val = parseFloat(input.value) || 0;
+                total += val;
+            });
+            
+            document.getElementById('planning-modal-total-budget').innerText = formatRupiah(total);
+            
+            let saldo = window.currentAiSaldo || 0;
+            let sisa = saldo - total;
+            let elProyeksi = document.getElementById('planning-modal-proyeksi-saldo');
+            elProyeksi.innerText = formatRupiah(sisa);
+            elProyeksi.style.color = sisa >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
         }
         
         async function savePlanningData() {
@@ -839,7 +935,18 @@
             
             const filterSelect = document.getElementById('global-month-filter');
             let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
-            const textData = document.getElementById('planning-textarea').value;
+            
+            let data = [];
+            let rows = document.getElementById('planning-rows-container').children;
+            for (let i = 0; i < rows.length; i++) {
+                let desc = rows[i].querySelector('.plan-desc').value;
+                let amount = rows[i].querySelector('.plan-amount').value;
+                if (desc.trim() !== '' || amount !== '') {
+                    data.push({ desc: desc, amount: amount });
+                }
+            }
+            
+            const textData = JSON.stringify(data);
             
             try {
                 const response = await fetch(SCRIPT_URL, {
@@ -855,15 +962,10 @@
                 const result = await response.json();
                 if (result.success) {
                     reportPlanningCache[monthVal] = textData;
-                    
-                    if (textData.trim() === '') {
-                        document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada planning tersimpan. Klik di sini untuk mulai mencatat rencana keuangan.</span>';
-                    } else {
-                        document.getElementById('planning-content').innerText = textData;
-                    }
+                    renderPlanningContent(textData, window.currentAiSaldo);
                     
                     document.getElementById('planning-modal').style.display = 'none';
-                    showAlert('Planning berhasil disimpan!', 'success');
+                    showAlert('Estimasi Budget berhasil disimpan!', 'success');
                 } else {
                     showAlert('Gagal menyimpan planning', 'error');
                 }
@@ -1180,6 +1282,7 @@
             });
             
             let saldo = totalMasuk - totalKeluar;
+            window.currentAiSaldo = saldo;
             
             let biggestUnit = 'Tanpa Unit';
             let biggestUnitTotal = 0;
