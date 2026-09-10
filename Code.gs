@@ -180,6 +180,21 @@ function doGet(e) {
     var jagoSheet = ss.getSheetByName('REKAPAN JAGO');
     var jagoData = jagoSheet ? jagoSheet.getDataRange().getValues() : [];
     return ContentService.createTextOutput(JSON.stringify({success: true, data: jagoData})).setMimeType(ContentService.MimeType.JSON);
+  } else if (action === 'get_planning') {
+    var planSheet = ss.getSheetByName('PLANNING_SALDO');
+    if (!planSheet) {
+      return ContentService.createTextOutput(JSON.stringify({success: true, data: ''})).setMimeType(ContentService.MimeType.JSON);
+    }
+    var planData = planSheet.getDataRange().getValues();
+    var filterMonth = e.parameter.month || 'Semua Bulan';
+    var textFound = '';
+    for (var i = 1; i < planData.length; i++) {
+      if (planData[i][1] === filterMonth) {
+        textFound = planData[i][2];
+        break;
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({success: true, data: textFound})).setMimeType(ContentService.MimeType.JSON);
   }
   return ContentService.createTextOutput(JSON.stringify({success: false, message: 'Action not found'})).setMimeType(ContentService.MimeType.JSON);
 }
@@ -242,6 +257,33 @@ function doPost(e) {
       var rowIndex = parseInt(requestData.row_index);
       sheet.getRange(rowIndex, 8).setValue(requestData.status);
       if (tfUrl) sheet.getRange(rowIndex, 12).setValue(tfUrl);
+      return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === 'save_planning') {
+      var planSheet = ss.getSheetByName('PLANNING_SALDO');
+      if (!planSheet) {
+        planSheet = ss.insertSheet('PLANNING_SALDO');
+        planSheet.getRange(1, 1, 1, 3).setValues([['Timestamp', 'Bulan', 'Teks Planning']]);
+        planSheet.getRange(1, 1, 1, 3).setFontWeight("bold").setBackground("#f3f4f6");
+      }
+      var filterMonth = requestData.month || 'Semua Bulan';
+      var textData = requestData.text || '';
+      var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+      
+      var planData = planSheet.getDataRange().getValues();
+      var found = false;
+      for (var i = 1; i < planData.length; i++) {
+        if (planData[i][1] === filterMonth) {
+          planSheet.getRange(i + 1, 1).setValue(now);
+          planSheet.getRange(i + 1, 3).setValue(textData);
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        planSheet.appendRow([now, filterMonth, textData]);
+      }
+      
       return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
     }
   } catch (err) {

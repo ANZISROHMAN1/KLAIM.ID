@@ -222,6 +222,15 @@
                         <div id="ai-insights-container" style="display: grid; grid-template-columns: 1fr; gap: 0.8rem; font-size: 0.95rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Menganalisis data keuangan...</div>
                         </div>
+                        <div id="planning-container" onclick="openPlanningModal()" style="margin-top: 1rem; padding: 1.5rem; background: var(--bg-input); border: 1px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; transition: var(--transition-fast);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600;">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-edit-2-line"></i> Planning Sisa Saldo</span>
+                                <span style="font-size: 0.8rem; background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px;">Klik untuk edit</span>
+                            </div>
+                            <div id="planning-content" style="color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap; line-height: 1.5; padding-top: 0.5rem;">
+                                <span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Trend Chart Section -->
@@ -324,6 +333,26 @@
                     <tbody id="unit-details-body">
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planning Modal -->
+    <div id="planning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div style="max-width: 600px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);">📝 Edit Planning Saldo</h2>
+                <button onclick="document.getElementById('planning-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
+            </div>
+            <div style="padding: 1.5rem; overflow-y: auto;">
+                <p style="margin-top: 0; margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                    Bulan: <strong id="planning-modal-month" style="color: var(--text-main);"></strong>
+                </p>
+                <textarea id="planning-textarea" class="form-control" style="width: 100%; height: 200px; resize: vertical; padding: 1rem; font-family: inherit; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);" placeholder="1. Beli alat tulis kantor...&#10;2. Bayar tagihan internet..."></textarea>
+            </div>
+            <div style="padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem; background: var(--bg-main);">
+                <button onclick="document.getElementById('planning-modal').style.display='none'" class="btn" style="background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">Batal</button>
+                <button onclick="savePlanningData()" id="btn-save-planning" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-save-line"></i> Simpan Planning</button>
             </div>
         </div>
     </div>
@@ -755,6 +784,96 @@
             fetchJagoData();
             fetchNeracaData();
             fetchInsights();
+            fetchPlanningData();
+        }
+        
+        const reportPlanningCache = {};
+        
+        async function fetchPlanningData() {
+            try {
+                const filterSelect = document.getElementById('global-month-filter');
+                let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
+                const monthParam = filterSelect && filterSelect.value ? `&month=${encodeURIComponent(filterSelect.value)}` : '';
+                
+                document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>';
+                
+                let textFound = '';
+                if (reportPlanningCache[monthVal] !== undefined) {
+                    textFound = reportPlanningCache[monthVal];
+                } else {
+                    const response = await fetch(SCRIPT_URL + '?action=get_planning' + monthParam);
+                    const result = await response.json();
+                    if (result.success) {
+                        textFound = result.data || '';
+                        reportPlanningCache[monthVal] = textFound;
+                    }
+                }
+                
+                if (textFound.trim() === '') {
+                    document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada planning tersimpan. Klik di sini untuk mulai mencatat rencana keuangan.</span>';
+                } else {
+                    document.getElementById('planning-content').innerText = textFound;
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('planning-content').innerHTML = '<span style="color: var(--danger-color);">Gagal memuat planning.</span>';
+            }
+        }
+        
+        function openPlanningModal() {
+            const filterSelect = document.getElementById('global-month-filter');
+            let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
+            
+            document.getElementById('planning-modal-month').innerText = monthVal;
+            let currentText = reportPlanningCache[monthVal] || '';
+            document.getElementById('planning-textarea').value = currentText;
+            
+            document.getElementById('planning-modal').style.display = 'flex';
+        }
+        
+        async function savePlanningData() {
+            const btn = document.getElementById('btn-save-planning');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Menyimpan...';
+            btn.disabled = true;
+            
+            const filterSelect = document.getElementById('global-month-filter');
+            let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
+            const textData = document.getElementById('planning-textarea').value;
+            
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'save_planning',
+                        month: monthVal,
+                        text: textData
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    reportPlanningCache[monthVal] = textData;
+                    
+                    if (textData.trim() === '') {
+                        document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada planning tersimpan. Klik di sini untuk mulai mencatat rencana keuangan.</span>';
+                    } else {
+                        document.getElementById('planning-content').innerText = textData;
+                    }
+                    
+                    document.getElementById('planning-modal').style.display = 'none';
+                    showAlert('Planning berhasil disimpan!', 'success');
+                } else {
+                    showAlert('Gagal menyimpan planning', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Error jaringan saat menyimpan planning', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
         
         let trendChartInstance = null;
