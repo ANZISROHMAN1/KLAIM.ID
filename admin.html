@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,7 @@
     <link rel="stylesheet" href="static/css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="static/manifest.json">
     <meta name="theme-color" content="#2563eb">
@@ -23,27 +24,43 @@
     </script>
     <style>
         .login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-main); z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-main);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
         .login-card {
-            background: var(--bg-mesh-1); padding: 2rem; border-radius: 12px;
-            width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 1px solid var(--border-color); text-align: center;
+            background: var(--bg-mesh-1);
+            padding: 2rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            text-align: center;
         }
     </style>
 </head>
+
 <body>
     <!-- Login Overlay -->
     <div id="login-overlay" class="login-overlay">
         <div class="login-card">
-            <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"><i class="ri-admin-fill"></i></div>
+            <div style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"><i
+                    class="ri-admin-fill"></i></div>
             <h2 style="margin-bottom: 1.5rem;">Login Admin</h2>
             <form id="loginForm">
                 <div class="form-group" style="text-align: left;">
                     <label>Password</label>
-                    <input type="password" id="adminPwd" class="form-control" placeholder="Masukkan password admin" required>
+                    <input type="password" id="adminPwd" class="form-control" placeholder="Masukkan password admin"
+                        required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
             </form>
@@ -54,9 +71,12 @@
     <div class="app-container" id="admin-app" style="display: none;">
         <!-- Sidebar Navigation -->
         <nav class="sidebar">
-            <div class="logo" style="display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass); margin-bottom: 1.5rem;">
-                <img src="logo.jpg" alt="KLAIM.ID Logo" style="height: 45px; width: 45px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 15px rgba(217, 70, 239, 0.5);">
-                <span style="font-size: 1.4rem; font-weight: 800; background: linear-gradient(90deg, #00f0ff, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px;">KLAIM.ID</span>
+            <div class="logo"
+                style="display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass); margin-bottom: 1.5rem;">
+                <img src="logo.jpg" alt="KLAIM.ID Logo"
+                    style="height: 45px; width: 45px; border-radius: 12px; object-fit: cover; box-shadow: 0 0 15px rgba(217, 70, 239, 0.5);">
+                <span
+                    style="font-size: 1.4rem; font-weight: 800; background: linear-gradient(90deg, #00f0ff, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px;">KLAIM.ID</span>
             </div>
             <ul class="nav-links">
                 <li>
@@ -88,9 +108,11 @@
                     <p id="page-desc">Monitoring dan pengelolaan pengajuan reimbursement</p>
                 </div>
                 <div class="profile-section">
-                    <div class="notification-icon" style="position: relative;" onclick="resetNotifBadge()" title="Notifikasi Baru">
+                    <div class="notification-icon" style="position: relative;" onclick="resetNotifBadge()"
+                        title="Notifikasi Baru">
                         <i class="ri-notification-3-line"></i>
-                        <span id="notif-badge" style="display: none; position: absolute; top: -5px; right: -5px; background: var(--danger-color); color: white; border-radius: 50%; font-size: 0.65rem; width: 16px; height: 16px; align-items: center; justify-content: center; font-weight: bold;">0</span>
+                        <span id="notif-badge"
+                            style="display: none; position: absolute; top: -5px; right: -5px; background: var(--danger-color); color: white; border-radius: 50%; font-size: 0.65rem; width: 16px; height: 16px; align-items: center; justify-content: center; font-weight: bold;">0</span>
                     </div>
                     <div class="notification-icon" onclick="toggleTheme()" title="Ganti Tema">
                         <i id="theme-icon" class="ri-sun-line"></i>
@@ -98,7 +120,8 @@
                     <div class="avatar">
                         <img src="https://ui-avatars.com/api/?name=Admin&background=random" alt="Admin Avatar">
                     </div>
-                    <a href="#" onclick="logout()" style="margin-left: 1rem; color: var(--danger-color); text-decoration: none; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <a href="#" onclick="logout()"
+                        style="margin-left: 1rem; color: var(--danger-color); text-decoration: none; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 0.3rem;">
                         <i class="ri-logout-box-r-line"></i> Logout
                     </a>
                 </div>
@@ -106,136 +129,176 @@
 
             <div class="content-wrapper">
                 <div id="alert-container"></div>
-                
+
                 <!-- Stats Row -->
                 <div id="dashboard-view">
-                <div class="dashboard-stats">
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('all')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="stat-icon blue">
-                            <i class="ri-file-list-3-line"></i>
+                    <div class="dashboard-stats">
+                        <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;"
+                            onclick="showStatusModal('all')" onmouseover="this.style.transform='scale(1.02)'"
+                            onmouseout="this.style.transform='scale(1)'">
+                            <div class="stat-icon blue">
+                                <i class="ri-file-list-3-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="stat-total">0</h3>
+                                <p>Total Pengajuan</p>
+                            </div>
                         </div>
-                        <div class="stat-details">
-                            <h3 id="stat-total">0</h3>
-                            <p>Total Pengajuan</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('Pending')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="stat-icon orange">
-                            <i class="ri-time-line"></i>
-                        </div>
-                        <div class="stat-details">
-                            <h3 id="stat-pending">0</h3>
-                            <p>Menunggu Konfirmasi</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;" onclick="showStatusModal('Approved')" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <div class="stat-icon green">
-                            <i class="ri-check-double-line"></i>
-                        </div>
-                        <div class="stat-details">
-                            <h3 id="stat-approved">0</h3>
-                            <p>Telah Dibayar</p>
-                        </div>
-                    </div>
-                </div>
 
-                <hr class="section-divider">
+                        <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;"
+                            onclick="showStatusModal('Pending')" onmouseover="this.style.transform='scale(1.02)'"
+                            onmouseout="this.style.transform='scale(1)'">
+                            <div class="stat-icon orange">
+                                <i class="ri-time-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="stat-pending">0</h3>
+                                <p>Menunggu Konfirmasi</p>
+                            </div>
+                        </div>
 
-                <!-- History Table -->
-                <div class="glass-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="font-size: 1.25rem; font-weight: 600;">Riwayat Pengajuan</h2>
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <select id="filter-unit" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Filter Unit">
-                                <option value="all">Semua Unit</option>
-                                <option value="OSP">OSP</option>
-                                <option value="ISP">ISP</option>
-                                <option value="FBB">FBB</option>
-                                <option value="BGES MBB">BGES MBB</option>
-                                <option value="DISTRICT">DISTRICT</option>
-                                <option value="HI">HI</option>
-                            </select>
-                            <input type="text" id="filter-sub-unit" class="form-control" placeholder="Cari Sub Unit..." style="width: 150px; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Filter Sub Unit">
-                            <input type="date" id="filter-start" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Tanggal Mulai">
-                            <span style="color: var(--text-muted);">sampai</span>
-                            <input type="date" id="filter-end" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;" title="Tanggal Akhir">
-                            <select id="filter-limit" class="form-control" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;" title="Batas Data" onchange="applyFilters()">
-                                <option value="10">Top 10</option>
-                                <option value="25">Top 25</option>
-                                <option value="50">Top 50</option>
-                                <option value="all">Semua</option>
-                            </select>
-                            <button onclick="applyFilters()" class="btn btn-sm btn-primary"><i class="ri-filter-3-line"></i> Filter</button>
-                            <button onclick="resetFilters()" class="btn btn-sm" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);"><i class="ri-refresh-line"></i> Refresh</button>
+                        <div class="stat-card" style="cursor: pointer; transition: transform 0.2s;"
+                            onclick="showStatusModal('Approved')" onmouseover="this.style.transform='scale(1.02)'"
+                            onmouseout="this.style.transform='scale(1)'">
+                            <div class="stat-icon green">
+                                <i class="ri-check-double-line"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h3 id="stat-approved">0</h3>
+                                <p>Telah Dibayar</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="table-container">
-                        <table class="modern-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Tanggal</th>
-                                    <th>Nama</th>
-                                    <th>Unit</th>
-                                    <th>Sub Unit</th>
-                                    <th>Kegiatan</th>
-                                    <th>Nominal</th>
-                                    <th>Bank & Rekening</th>
-                                    <th>Bukti</th>
-                                    <th>Status</th>
-                                    <th>Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="table-body">
-                                <tr>
-                                    <td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-                                        <i class="ri-loader-4-line ri-spin" style="font-size: 2rem;"></i><br>Memuat data...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                    <hr class="section-divider">
+
+                    <!-- History Table -->
+                    <div class="glass-card">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                            <h2 style="font-size: 1.25rem; font-weight: 600;">Riwayat Pengajuan</h2>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                <select id="filter-unit" class="form-control"
+                                    style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;"
+                                    title="Filter Unit">
+                                    <option value="all">Semua Unit</option>
+                                    <option value="OSP">OSP</option>
+                                    <option value="ISP">ISP</option>
+                                    <option value="FBB">FBB</option>
+                                    <option value="BGES MBB">BGES MBB</option>
+                                    <option value="DISTRICT">DISTRICT</option>
+                                    <option value="HI">HI</option>
+                                </select>
+                                <input type="text" id="filter-sub-unit" class="form-control"
+                                    placeholder="Cari Sub Unit..."
+                                    style="width: 150px; padding: 0.4rem 0.8rem; font-size: 0.85rem;"
+                                    title="Filter Sub Unit">
+                                <input type="date" id="filter-start" class="form-control"
+                                    style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;"
+                                    title="Tanggal Mulai">
+                                <span style="color: var(--text-muted);">sampai</span>
+                                <input type="date" id="filter-end" class="form-control"
+                                    style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem;"
+                                    title="Tanggal Akhir">
+                                <select id="filter-limit" class="form-control"
+                                    style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;"
+                                    title="Batas Data" onchange="applyFilters()">
+                                    <option value="10">Top 10</option>
+                                    <option value="25">Top 25</option>
+                                    <option value="50">Top 50</option>
+                                    <option value="all">Semua</option>
+                                </select>
+                                <button onclick="applyFilters()" class="btn btn-sm btn-primary"><i
+                                        class="ri-filter-3-line"></i> Filter</button>
+                                <button onclick="resetFilters()" class="btn btn-sm"
+                                    style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);"><i
+                                        class="ri-refresh-line"></i> Refresh</button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tanggal</th>
+                                        <th>Nama</th>
+                                        <th>Unit</th>
+                                        <th>Sub Unit</th>
+                                        <th>Kegiatan</th>
+                                        <th>Nominal</th>
+                                        <th>Bank & Rekening</th>
+                                        <th>Bukti</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <tr>
+                                        <td colspan="11"
+                                            style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                            <i class="ri-loader-4-line ri-spin" style="font-size: 2rem;"></i><br>Memuat
+                                            data...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
                 </div> <!-- End of dashboard-view -->
 
                 <div id="report-view" style="display: none;">
-                    <div class="glass-card" style="margin-bottom: 2rem; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="glass-card"
+                        style="margin-bottom: 2rem; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
                         <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Filter Laporan Keuangan</h3>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <span style="font-weight: 500; color: var(--text-muted);">Bulan:</span>
-                            <select id="global-month-filter" onchange="fetchReportData()" class="form-control" style="width: 200px; padding: 0.5rem; border-radius: 8px; background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">
+                            <select id="global-month-filter" onchange="fetchReportData()" class="form-control"
+                                style="width: 200px; padding: 0.5rem; border-radius: 8px; background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">
                                 <option value="">Memuat filter...</option>
                             </select>
-                            <button onclick="fetchReportData()" class="btn btn-sm" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);"><i class="ri-refresh-line"></i> Refresh</button>
+                            <button onclick="fetchReportData()" class="btn btn-sm"
+                                style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);"><i
+                                    class="ri-refresh-line"></i> Refresh</button>
                         </div>
                     </div>
 
                     <!-- AI Insights Section -->
-                    <div class="glass-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%); border-left: 4px solid #8b5cf6;">
+                    <div class="glass-card"
+                        style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%); border-left: 4px solid #8b5cf6;">
                         <div style="display: flex; align-items: center; margin-bottom: 1rem; gap: 0.5rem;">
                             <i class="ri-lightbulb-flash-fill" style="color: #fbbf24; font-size: 1.5rem;"></i>
-                            <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0; background: linear-gradient(90deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">AI Insights</h2>
+                            <h2
+                                style="font-size: 1.25rem; font-weight: 600; margin: 0; background: linear-gradient(90deg, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                AI Insights</h2>
                         </div>
-                        <div id="ai-insights-container" style="display: grid; grid-template-columns: 1fr; gap: 0.8rem; font-size: 0.95rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Menganalisis data keuangan...</div>
+                        <div id="ai-insights-container"
+                            style="display: grid; grid-template-columns: 1fr; gap: 0.8rem; font-size: 0.95rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted);"><i
+                                    class="ri-loader-4-line ri-spin"></i> Menganalisis data keuangan...</div>
                         </div>
-                        <div id="planning-container" onclick="openPlanningModal()" style="margin-top: 1rem; padding: 1.5rem; background: var(--bg-input); border: 1px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; transition: var(--transition-fast);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600;">
-                                <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-edit-2-line"></i> Rencana & Estimasi Budget</span>
-                                <span style="font-size: 0.8rem; background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px;">Klik untuk edit</span>
+                        <div id="planning-container" onclick="openPlanningModal()"
+                            style="margin-top: 1rem; padding: 1.5rem; background: var(--bg-input); border: 1px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; transition: var(--transition-fast);">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600;">
+                                <span style="display: flex; align-items: center; gap: 0.5rem;"><i
+                                        class="ri-edit-2-line"></i> Rencana & Estimasi Budget</span>
+                                <span
+                                    style="font-size: 0.8rem; background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px;">Klik
+                                    untuk edit</span>
                             </div>
-                            <div id="planning-content" style="color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap; line-height: 1.5; padding-top: 0.5rem;">
-                                <span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat rencana...</span>
+                            <div id="planning-content"
+                                style="color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap; line-height: 1.5; padding-top: 0.5rem;">
+                                <span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat
+                                    rencana...</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Trend Chart Section -->
                     <div class="glass-card" style="margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h2 style="font-size: 1.25rem; font-weight: 600;">Trend Pemasukan & Pengeluaran</h2>
                         </div>
                         <div style="position: relative; height: 350px;">
@@ -245,7 +308,8 @@
 
                     <!-- Financial Report Section -->
                     <div class="glass-card" style="margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h2 style="font-size: 1.25rem; font-weight: 600;">Laporan Keuangan per Unit</h2>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
@@ -264,18 +328,22 @@
                                     </thead>
                                     <tbody id="report-summary-body">
                                         <tr>
-                                            <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat data...</td>
+                                            <td colspan="4"
+                                                style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                                Memuat data...</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Rekapan Jago Report Section -->
                     <div class="glass-card" style="margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h2 style="font-size: 1.25rem; font-weight: 600;">Total Pengeluaran per Unit (Data Rekapan Jago)</h2>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h2 style="font-size: 1.25rem; font-weight: 600;">Total Pengeluaran per Unit (Data Rekapan
+                                Jago)</h2>
                         </div>
                         <div style="position: relative; height: 350px;">
                             <canvas id="jagoChart"></canvas>
@@ -284,7 +352,8 @@
 
                     <!-- Neraca Keuangan Section -->
                     <div class="glass-card" style="margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h2 style="font-size: 1.25rem; font-weight: 600;">Neraca Keuangan</h2>
                         </div>
                         <div class="table-container">
@@ -298,7 +367,9 @@
                                 </thead>
                                 <tbody id="neraca-body">
                                     <tr>
-                                        <td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat data neraca...</td>
+                                        <td colspan="3"
+                                            style="text-align: center; padding: 2rem; color: var(--text-muted);">Memuat
+                                            data neraca...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -314,11 +385,17 @@
     <input type="file" id="tf-upload-input" accept="image/*,.pdf" style="display: none;">
 
     <!-- Unit Details Modal -->
-    <div id="unit-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
-        <div style="max-width: 800px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
-                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);" id="modal-unit-title">Detail Unit</h2>
-                <button onclick="document.getElementById('unit-details-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
+    <div id="unit-details-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div
+            style="max-width: 800px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);" id="modal-unit-title">Detail Unit
+                </h2>
+                <button onclick="document.getElementById('unit-details-modal').style.display='none'"
+                    style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i
+                        class="ri-close-line"></i></button>
             </div>
             <div style="overflow-y: auto; flex-grow: 1; padding: 1.5rem;">
                 <table class="modern-table" style="width: 100%; margin: 0;">
@@ -338,30 +415,42 @@
     </div>
 
     <!-- Planning Modal -->
-    <div id="planning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
-        <div style="max-width: 600px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+    <div id="planning-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div
+            style="max-width: 600px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
                 <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);">📝 Rencana & Estimasi Budget</h2>
-                <button onclick="document.getElementById('planning-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
+                <button onclick="document.getElementById('planning-modal').style.display='none'"
+                    style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i
+                        class="ri-close-line"></i></button>
             </div>
             <div style="padding: 1.5rem; overflow-y: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">
                         Periode: <strong id="planning-modal-month" style="color: var(--text-main);"></strong>
                     </p>
-                    <div style="background: var(--bg-input); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
-                        Sisa Saldo Awal: <strong id="planning-modal-saldo" style="color: var(--success-color);">Rp 0</strong>
+                    <div
+                        style="background: var(--bg-input); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+                        Sisa Saldo Awal: <strong id="planning-modal-saldo" style="color: var(--success-color);">Rp
+                            0</strong>
                     </div>
                 </div>
-                
-                <div id="planning-rows-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+
+                <div id="planning-rows-container"
+                    style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
                     <!-- Rows will be injected here -->
                 </div>
-                
-                <button onclick="addPlanRow()" class="btn btn-sm" style="background: transparent; color: var(--primary-color); border: 1px dashed var(--primary-color); width: 100%; padding: 0.75rem;"><i class="ri-add-line"></i> Tambah Rencana Baru</button>
-                
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+
+                <button onclick="addPlanRow()" class="btn btn-sm"
+                    style="background: transparent; color: var(--primary-color); border: 1px dashed var(--primary-color); width: 100%; padding: 0.75rem;"><i
+                        class="ri-add-line"></i> Tambah Rencana Baru</button>
+
+                <div
+                    style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div
+                        style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
                         <span style="color: var(--text-muted);">Total Estimasi Budget:</span>
                         <strong id="planning-modal-total-budget" style="color: var(--danger-color);">Rp 0</strong>
                     </div>
@@ -371,19 +460,29 @@
                     </div>
                 </div>
             </div>
-            <div style="padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem; background: var(--bg-main);">
-                <button onclick="document.getElementById('planning-modal').style.display='none'" class="btn" style="background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">Batal</button>
-                <button onclick="savePlanningData()" id="btn-save-planning" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-save-line"></i> Simpan Estimasi</button>
+            <div
+                style="padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem; background: var(--bg-main);">
+                <button onclick="document.getElementById('planning-modal').style.display='none'" class="btn"
+                    style="background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">Batal</button>
+                <button onclick="savePlanningData()" id="btn-save-planning" class="btn btn-primary"
+                    style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-save-line"></i> Simpan
+                    Estimasi</button>
             </div>
         </div>
     </div>
 
     <!-- Status Details Modal -->
-    <div id="status-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
-        <div style="max-width: 1200px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
-                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);" id="modal-status-title">Daftar Pengajuan</h2>
-                <button onclick="document.getElementById('status-details-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
+    <div id="status-details-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
+        <div
+            style="max-width: 1200px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);" id="modal-status-title">Daftar
+                    Pengajuan</h2>
+                <button onclick="document.getElementById('status-details-modal').style.display='none'"
+                    style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i
+                        class="ri-close-line"></i></button>
             </div>
             <div style="overflow-y: auto; flex-grow: 1; padding: 1.5rem;" class="table-container">
                 <table class="modern-table" style="width: 100%; margin: 0;">
@@ -410,13 +509,13 @@
     <script>
         // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydaSlqJ8BPOPhnKd3P6j_lP84Ygfb3Vt7yCkF_tJRCZOeXmAOPh4Gm-wqBWpEazp5fCg/exec';
-        
+
         function switchTab(tabId) {
             document.getElementById('nav-dashboard').classList.remove('active');
             document.getElementById('nav-report').classList.remove('active');
             document.getElementById('dashboard-view').style.display = 'none';
             document.getElementById('report-view').style.display = 'none';
-            
+
             if (tabId === 'dashboard') {
                 document.getElementById('nav-dashboard').classList.add('active');
                 document.getElementById('dashboard-view').style.display = 'block';
@@ -429,7 +528,7 @@
                 document.getElementById('page-desc').innerText = 'Ringkasan laporan pengajuan per unit';
                 // Trigger chart resize when unhidden
                 if (unitChart) unitChart.resize();
-                
+
                 // Fetch data if not already fetched
                 if (!document.getElementById('report-view').dataset.fetched) {
                     fetchReportData();
@@ -437,7 +536,7 @@
                 }
             }
         }
-        
+
         let currentData = [];
         let pendingUpdateRowId = null;
         let pendingUpdateStatus = null;
@@ -451,8 +550,8 @@
 
         // Simple auth
         const ADMIN_PWD = 'admin123';
-        
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
             e.preventDefault();
             if (document.getElementById('adminPwd').value === ADMIN_PWD) {
                 localStorage.setItem('admin_logged_in', 'true');
@@ -478,28 +577,28 @@
                 startAutoRefresh();
             }
         }
-        
+
         function startAutoRefresh() {
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
             // Polling setiap 30 detik untuk mengecek data baru
             autoRefreshInterval = setInterval(() => {
                 fetchData(true);
-            }, 30000); 
+            }, 30000);
         }
 
         function playNotificationSound() {
             try {
                 const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                 audio.play().catch(e => console.log('Autoplay dicegah oleh browser', e));
-            } catch(e) {}
+            } catch (e) { }
         }
-        
+
         function resetNotifBadge() {
             unreadNotifCount = 0;
             document.getElementById('notif-badge').style.display = 'none';
             document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
         }
-        
+
         function formatRupiah(angka) {
             const num = parseFloat(angka);
             if (isNaN(num)) return "Rp 0";
@@ -527,26 +626,26 @@
                 if (!isSilent) showAlert('Silakan set SCRIPT_URL terlebih dahulu', 'error');
                 return;
             }
-            
+
             try {
                 const response = await fetch(SCRIPT_URL + '?action=list');
                 const result = await response.json();
-                
+
                 if (result.success) {
                     const newTotal = result.data.length;
-                    
+
                     // Cek jika ada data baru masuk
                     if (!isFirstLoad && newTotal > lastTotalCount) {
                         const newItemsCount = newTotal - lastTotalCount;
                         showAlert(`🔔 Ada ${newItemsCount} pengajuan klaim baru!`, 'success');
                         playNotificationSound();
-                        
+
                         unreadNotifCount += newItemsCount;
                         const badge = document.getElementById('notif-badge');
                         badge.innerText = unreadNotifCount;
                         badge.style.display = 'flex';
                     }
-                    
+
                     lastTotalCount = newTotal;
                     isFirstLoad = false;
 
@@ -575,16 +674,16 @@
         function showStatusModal(status) {
             let filtered = currentData;
             let title = 'Semua Pengajuan';
-            
+
             if (status !== 'all') {
                 filtered = filtered.filter(d => d.Status === status);
                 if (status === 'Pending') title = 'Menunggu Konfirmasi';
                 if (status === 'Approved') title = 'Telah Dibayar';
                 if (status === 'Rejected') title = 'Ditolak';
             }
-            
+
             document.getElementById('modal-status-title').innerText = title + ' (' + filtered.length + ' data)';
-            
+
             const tbody = document.getElementById('status-details-body');
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
@@ -593,7 +692,7 @@
                 filtered.forEach(item => {
                     let dateStr = item.Tanggal;
                     if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
-                    
+
                     let buktiHtml = '';
                     if (item.Bukti_Path) buktiHtml += `<a href="${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>`;
                     if (item.Bukti_TF_Path) buktiHtml += `<br><a href="${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>`;
@@ -617,7 +716,7 @@
                 });
                 tbody.innerHTML = html;
             }
-            
+
             document.getElementById('status-details-modal').style.display = 'flex';
         }
 
@@ -633,18 +732,18 @@
 
         function applyFilters() {
             let filtered = currentData;
-            
+
             // 1. Filter by Status
             if (currentStatusFilter !== 'all') {
                 filtered = filtered.filter(d => d.Status === currentStatusFilter);
             }
-            
+
             // 2. Filter by Unit
             const unitFilter = document.getElementById('filter-unit') ? document.getElementById('filter-unit').value : 'all';
             if (unitFilter !== 'all') {
                 filtered = filtered.filter(d => d.Unit === unitFilter);
             }
-            
+
             // 2.1 Filter by Sub Unit
             const subUnitFilter = document.getElementById('filter-sub-unit') ? document.getElementById('filter-sub-unit').value.toLowerCase() : '';
             if (subUnitFilter) {
@@ -653,34 +752,34 @@
                     return subUnit.toLowerCase().includes(subUnitFilter);
                 });
             }
-            
+
             // 3. Filter by Date Range
             const startDate = document.getElementById('filter-start').value;
             const endDate = document.getElementById('filter-end').value;
-            
+
             if (startDate || endDate) {
                 filtered = filtered.filter(item => {
                     let dateStr = item.Tanggal;
                     if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
-                    
+
                     // Convert to pure YYYY-MM-DD for accurate comparison
                     try {
                         const itemDate = new Date(dateStr).toISOString().split('T')[0];
                         if (startDate && itemDate < startDate) return false;
                         if (endDate && itemDate > endDate) return false;
                         return true;
-                    } catch(e) {
+                    } catch (e) {
                         return true; // if date is unparseable, include it
                     }
                 });
             }
-            
+
             // 4. Limit Results (Top 10 by default)
             const limitVal = document.getElementById('filter-limit') ? document.getElementById('filter-limit').value : '10';
             if (limitVal !== 'all') {
                 filtered = filtered.slice(0, parseInt(limitVal, 10));
             }
-            
+
             renderTable(filtered);
             // updateFinancialReport is no longer called here, as it will be populated by Jago data
         }
@@ -689,32 +788,32 @@
             // Group data by Unit
             const unitSummary = {};
             let totalAmount = 0;
-            
+
             data.forEach(item => {
                 // Ignore empty or invalid nominals
                 if (item.Status === 'Rejected') return; // optionally exclude rejected claims from financial report
-                
+
                 let unit = item.Unit || 'Lainnya';
                 const subUnit = item.Sub_Unit || item['Sub Unit'];
                 if (subUnit && subUnit.trim() !== '') {
                     unit += ' - ' + subUnit;
                 }
                 const nominal = Number(item.Nominal) || 0;
-                
+
                 if (!unitSummary[unit]) {
                     unitSummary[unit] = { count: 0, total: 0 };
                 }
-                
+
                 unitSummary[unit].count += 1;
                 unitSummary[unit].total += nominal;
                 totalAmount += nominal;
             });
-            
+
             // Prepare data for Chart and Table
             const labels = Object.keys(unitSummary);
             const amounts = labels.map(label => unitSummary[label].total);
             const counts = labels.map(label => unitSummary[label].count);
-            
+
             // Update Table
             const tbody = document.getElementById('report-summary-body');
             if (labels.length === 0) {
@@ -745,23 +844,23 @@
                 `;
                 tbody.innerHTML = html;
             }
-            
+
             // Update Chart
             const ctx = document.getElementById('unitPieChart');
             if (!ctx) return;
-            
+
             if (unitChart) {
                 unitChart.destroy();
             }
-            
+
             if (labels.length > 0) {
                 const bgColors = [
-                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899',
                     '#ef4444', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9',
                     '#6366f1', '#f97316', '#d946ef', '#eab308', '#06b6d4',
                     '#8b5cf6', '#10b981', '#f43f5e', '#3b82f6', '#f59e0b'
                 ];
-                
+
                 unitChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -779,14 +878,14 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { 
+                                labels: {
                                     color: document.documentElement.getAttribute('data-theme') === 'light' ? '#1f2937' : '#f9fafb',
                                     padding: 20
                                 }
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         let label = context.label || '';
                                         if (label) label += ': ';
                                         if (context.parsed !== null) {
@@ -800,37 +899,36 @@
                     }
                 });
             }
-        } 
+        }
         async function fetchReportData() {
             fetchJagoData();
-            await fetchNeracaData(); // Wait for dropdown to be populated with current month
-            
+            await fetchNeracaData();
             fetchInsights().then(() => {
                 fetchPlanningData();
             });
         }
-        
+
         const reportPlanningCache = {};
-        
+
         function renderPlanningContent(textData, saldo) {
             let container = document.getElementById('planning-content');
             let data = [];
             try {
                 if (textData) data = JSON.parse(textData);
-            } catch(e) {
+            } catch (e) {
                 container.innerText = textData;
                 return;
             }
-            
+
             if (!data || data.length === 0) {
                 container.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada rencana estimasi tersimpan. Klik di sini untuk mulai mencatat.</span>';
                 return;
             }
-            
+
             let totalEstimasi = 0;
             let html = `<table class="modern-table" style="margin-top: 0.5rem; font-size: 0.9rem;">
                 <thead><tr><th style="padding: 0.5rem; background: var(--bg-main);">Keterangan Rencana</th><th style="padding: 0.5rem; text-align: right; background: var(--bg-main);">Estimasi Budget</th></tr></thead><tbody>`;
-                
+
             data.forEach(item => {
                 let amount = parseFloat(item.amount) || 0;
                 totalEstimasi += amount;
@@ -839,12 +937,12 @@
                     <td style="padding: 0.5rem; text-align: right;">${formatRupiah(amount)}</td>
                 </tr>`;
             });
-            
+
             html += `</tbody></table>`;
-            
+
             let sisaProyeksi = (saldo || 0) - totalEstimasi;
             let proyeksiColor = sisaProyeksi >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
-            
+
             html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem; background: var(--bg-main); border-radius: 6px; font-size: 0.9rem;">
                 <div style="display: flex; flex-direction: column; gap: 0.2rem;">
                     <span style="color: var(--text-muted);">Sisa Saldo Saat Ini</span>
@@ -859,18 +957,18 @@
                     <strong style="color: ${proyeksiColor}; font-size: 1.05rem;">${formatRupiah(sisaProyeksi)}</strong>
                 </div>
             </div>`;
-            
+
             container.innerHTML = html;
         }
-        
+
         async function fetchPlanningData() {
             try {
                 const filterSelect = document.getElementById('global-month-filter');
                 let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
                 const monthParam = filterSelect && filterSelect.value ? `&month=${encodeURIComponent(filterSelect.value)}` : '';
-                
+
                 document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>';
-                
+
                 let textFound = '';
                 if (reportPlanningCache[monthVal] !== undefined) {
                     textFound = reportPlanningCache[monthVal];
@@ -882,38 +980,38 @@
                         reportPlanningCache[monthVal] = textFound;
                     }
                 }
-                
+
                 renderPlanningContent(textFound, window.currentAiSaldo);
             } catch (error) {
                 console.error(error);
                 document.getElementById('planning-content').innerHTML = '<span style="color: var(--danger-color);">Gagal memuat planning.</span>';
             }
         }
-        
+
         function openPlanningModal() {
             const filterSelect = document.getElementById('global-month-filter');
             let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
-            
+
             document.getElementById('planning-modal-month').innerText = monthVal;
             document.getElementById('planning-modal-saldo').innerText = formatRupiah(window.currentAiSaldo || 0);
-            
+
             let currentText = reportPlanningCache[monthVal] || '';
             let data = [];
-            try { if (currentText) data = JSON.parse(currentText); } catch(e) {}
-            
+            try { if (currentText) data = JSON.parse(currentText); } catch (e) { }
+
             const container = document.getElementById('planning-rows-container');
             container.innerHTML = '';
-            
+
             if (data.length === 0) {
                 addPlanRow(); // Add one empty row by default
             } else {
                 data.forEach(item => addPlanRow(item.desc, item.amount));
             }
-            
+
             calculatePlanTotal();
             document.getElementById('planning-modal').style.display = 'flex';
         }
-        
+
         function addPlanRow(desc = '', amount = '') {
             const container = document.getElementById('planning-rows-container');
             const row = document.createElement('div');
@@ -939,25 +1037,25 @@
                 let val = parseFloat(input.value) || 0;
                 total += val;
             });
-            
+
             document.getElementById('planning-modal-total-budget').innerText = formatRupiah(total);
-            
+
             let saldo = window.currentAiSaldo || 0;
             let sisa = saldo - total;
             let elProyeksi = document.getElementById('planning-modal-proyeksi-saldo');
             elProyeksi.innerText = formatRupiah(sisa);
             elProyeksi.style.color = sisa >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
         }
-        
+
         async function savePlanningData() {
             const btn = document.getElementById('btn-save-planning');
             const originalText = btn.innerHTML;
             btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Menyimpan...';
             btn.disabled = true;
-            
+
             const filterSelect = document.getElementById('global-month-filter');
             let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
-            
+
             let data = [];
             let rows = document.getElementById('planning-rows-container').children;
             for (let i = 0; i < rows.length; i++) {
@@ -967,9 +1065,9 @@
                     data.push({ desc: desc, amount: amount });
                 }
             }
-            
+
             const textData = JSON.stringify(data);
-            
+
             try {
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
@@ -980,12 +1078,12 @@
                         text: textData
                     })
                 });
-                
+
                 const result = await response.json();
                 if (result.success) {
                     reportPlanningCache[monthVal] = textData;
                     renderPlanningContent(textData, window.currentAiSaldo);
-                    
+
                     document.getElementById('planning-modal').style.display = 'none';
                     showAlert('Estimasi Budget berhasil disimpan!', 'success');
                 } else {
@@ -999,7 +1097,7 @@
                 btn.disabled = false;
             }
         }
-        
+
         let trendChartInstance = null;
 
         function parseDateSafeClient(val) {
@@ -1025,11 +1123,11 @@
                     renderTrendChart(window.rawJagoData);
                     return;
                 }
-                
+
                 // Fetch ALL raw jago data to compute insights over time without current month filter
                 const response = await fetch(SCRIPT_URL + '?action=debug_jago');
                 const result = await response.json();
-                
+
                 if (result.success && result.data) {
                     window.rawJagoData = result.data; // Cache for the pop-up modal
                     generateInsightsFromJago(result.data);
@@ -1042,44 +1140,44 @@
                 document.getElementById('ai-insights-container').innerHTML = `<div style="color: var(--danger-color); padding: 0.5rem; background: var(--bg-main); border-radius: 8px;">Terjadi kesalahan jaringan saat memuat insights.</div>`;
             }
         }
-        
+
         function renderTrendChart(data) {
             const filterSelect = document.getElementById('global-month-filter');
             const selectedMonth = filterSelect ? filterSelect.value : '';
 
             const headerRow = data[0];
-            const isSplitCols = (headerRow.length >= 8) || 
-                              (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
-                              (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
-            
+            const isSplitCols = (headerRow.length >= 8) ||
+                (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
+                (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
+
             const CUTOFF_DATE = new Date(2026, 6, 30); // 30 Juli 2026
             const dailyData = {};
-            
+
             for (let i = 1; i < data.length; i++) {
                 let rowDate = parseDateSafeClient(data[i][0]);
                 if (!rowDate || rowDate < CUTOFF_DATE) continue;
-                
+
                 let monthYear = '';
                 try {
                     const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 if (selectedMonth && selectedMonth !== 'Semua Bulan' && monthYear !== selectedMonth) {
                     continue; // Skip if it doesn't match selected month
                 }
-                
+
                 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 let dateLabel = ('0' + rowDate.getDate()).slice(-2) + ' ' + shortMonths[rowDate.getMonth()];
-                let sortKey = rowDate.getFullYear() + '-' + ('0' + (rowDate.getMonth()+1)).slice(-2) + '-' + ('0' + rowDate.getDate()).slice(-2);
-                
+                let sortKey = rowDate.getFullYear() + '-' + ('0' + (rowDate.getMonth() + 1)).slice(-2) + '-' + ('0' + rowDate.getDate()).slice(-2);
+
                 if (!dailyData[sortKey]) {
                     dailyData[sortKey] = { label: dateLabel, pemasukan: 0, pengeluaran: 0 };
                 }
-                
+
                 let masuk = 0;
                 let keluar = 0;
-                
+
                 if (isSplitCols) {
                     masuk = parseFloat(data[i][4]) || 0;
                     keluar = parseFloat(data[i][5]) || 0;
@@ -1088,31 +1186,31 @@
                     if (amount > 0) masuk = amount;
                     else if (amount < 0) keluar = Math.abs(amount);
                 }
-                
+
                 dailyData[sortKey].pemasukan += masuk;
                 dailyData[sortKey].pengeluaran += keluar;
             }
-            
+
             const sortedKeys = Object.keys(dailyData).sort();
             const labels = [];
             const dataPemasukan = [];
             const dataPengeluaran = [];
-            
+
             for (let key of sortedKeys) {
                 labels.push(dailyData[key].label);
                 dataPemasukan.push(dailyData[key].pemasukan);
                 dataPengeluaran.push(dailyData[key].pengeluaran);
             }
-            
+
             const ctx = document.getElementById('trendChart');
             if (!ctx) return;
-            
+
             if (trendChartInstance) {
                 trendChartInstance.destroy();
             }
-            
+
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-            
+
             trendChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1169,7 +1267,7 @@
                             borderColor: isLight ? '#e5e7eb' : '#374151',
                             borderWidth: 1,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     let label = context.dataset.label || '';
                                     if (label) label += ': ';
                                     if (context.parsed.y !== null) {
@@ -1188,9 +1286,9 @@
                             },
                             ticks: {
                                 color: isLight ? '#6b7280' : '#9ca3af',
-                                callback: function(value) {
-                                    if (value >= 1000000) return 'Rp ' + (value/1000000) + ' Juta';
-                                    if (value >= 1000) return 'Rp ' + (value/1000) + ' Ribu';
+                                callback: function (value) {
+                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + ' Juta';
+                                    if (value >= 1000) return 'Rp ' + (value / 1000) + ' Ribu';
                                     return 'Rp ' + value;
                                 }
                             }
@@ -1207,39 +1305,39 @@
                 }
             });
         }
-        
+
         function generateInsightsFromJago(data) {
             if (data.length < 2) {
                 document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada data cukup untuk dianalisis.</div>`;
                 return;
             }
-            
+
             const filterSelect = document.getElementById('global-month-filter');
             const selectedMonthStr = filterSelect ? filterSelect.value : 'Semua Bulan';
-            
+
             const headerRow = data[0];
-            const isSplitCols = (headerRow.length >= 8) || 
-                              (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
-                              (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
-            
+            const isSplitCols = (headerRow.length >= 8) ||
+                (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
+                (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
+
             const CUTOFF_DATE = new Date(2026, 6, 30);
-            
+
             const parsedData = [];
             for (let i = 1; i < data.length; i++) {
                 let rowDate = parseDateSafeClient(data[i][0]);
                 if (!rowDate || rowDate < CUTOFF_DATE) continue;
-                
+
                 let monthYear = '';
                 try {
                     const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 let masuk = 0;
                 let keluar = 0;
                 let unit = 'Lainnya';
                 let categoryRaw = '';
-                
+
                 if (isSplitCols) {
                     masuk = parseFloat(data[i][4]) || 0;
                     keluar = parseFloat(data[i][5]) || 0;
@@ -1252,41 +1350,41 @@
                     unit = data[i][6] || 'Tanpa Unit';
                     categoryRaw = (data[i][2] || '').toString().toLowerCase();
                 }
-                
+
                 let category = 'Lainnya';
                 if (categoryRaw.includes('top up')) category = 'Top Up';
                 else if (categoryRaw.includes('transfer')) category = 'Transfer';
                 else if (categoryRaw.includes('qris')) category = 'QRIS';
                 else if (categoryRaw.includes('biaya') || categoryRaw.includes('admin') || categoryRaw.includes('fee')) category = 'Biaya Admin';
                 else if (categoryRaw.includes('tarik tunai')) category = 'Tarik Tunai';
-                
+
                 parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category });
             }
-            
+
             if (parsedData.length === 0) {
                 document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada transaksi valid untuk dianalisa.</div>`;
                 return;
             }
-            
-            parsedData.sort((a,b) => b.date - a.date);
-            
+
+            parsedData.sort((a, b) => b.date - a.date);
+
             let targetMonthYear = selectedMonthStr;
             let isAllMonths = false;
-            
+
             if (!targetMonthYear || targetMonthYear === 'Semua Bulan' || targetMonthYear === '') {
                 isAllMonths = true;
                 targetMonthYear = 'Keseluruhan Waktu';
             }
-            
+
             let currentMonthData = isAllMonths ? parsedData : parsedData.filter(d => d.monthYear === targetMonthYear);
             if (currentMonthData.length === 0) currentMonthData = parsedData; // Fallback
-            
+
             let totalMasuk = 0;
             let totalKeluar = 0;
             let unitMap = {};
             let categoryMap = {};
             let monthlyExpenseMap = {};
-            
+
             currentMonthData.forEach(d => {
                 totalMasuk += d.masuk;
                 totalKeluar += d.keluar;
@@ -1295,17 +1393,17 @@
                     unitMap[d.unit] += d.keluar;
                     if (!categoryMap[d.category]) categoryMap[d.category] = 0;
                     categoryMap[d.category] += d.keluar;
-                    
+
                     if (isAllMonths) {
                         if (!monthlyExpenseMap[d.monthYear]) monthlyExpenseMap[d.monthYear] = 0;
                         monthlyExpenseMap[d.monthYear] += d.keluar;
                     }
                 }
             });
-            
+
             let saldo = totalMasuk - totalKeluar;
             window.currentAiSaldo = saldo;
-            
+
             let biggestUnit = 'Tanpa Unit';
             let biggestUnitTotal = 0;
             for (let u in unitMap) {
@@ -1314,7 +1412,7 @@
                     biggestUnit = u;
                 }
             }
-            
+
             let biggestCategory = 'Lainnya';
             let biggestCategoryTotal = 0;
             for (let c in categoryMap) {
@@ -1323,11 +1421,11 @@
                     biggestCategory = c;
                 }
             }
-            
+
             let categoryPct = totalKeluar > 0 ? Math.round((biggestCategoryTotal / totalKeluar) * 100) : 0;
-            
+
             let diffHtml = "";
-            
+
             if (isAllMonths) {
                 let highestMonth = '-';
                 let highestExpense = 0;
@@ -1343,15 +1441,15 @@
                 let prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 15);
                 const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                 let prevMonthYear = monthsId[prevMonthDate.getMonth()] + ' ' + prevMonthDate.getFullYear();
-                
+
                 let prevMonthData = parsedData.filter(d => d.monthYear === prevMonthYear);
                 let prevTotalKeluar = 0;
                 prevMonthData.forEach(d => prevTotalKeluar += d.keluar);
-                
+
                 let diffText = "";
                 let diffColor = "var(--text-main)";
                 let prevMonthName = prevMonthYear.split(' ')[0];
-                
+
                 if (prevTotalKeluar > 0) {
                     let diff = totalKeluar - prevTotalKeluar;
                     let pct = Math.abs(Math.round((diff / prevTotalKeluar) * 100));
@@ -1368,13 +1466,13 @@
                     diffText = `Belum ada data pembanding`;
                     prevMonthName = "bulan sebelumnya";
                 }
-                
+
                 diffHtml = `<li><span style="color: ${diffColor};">${diffText}</span> dibandingkan bulan sebelumnya (${prevMonthName}).</li>`;
             }
-            
+
             const isLight = document.documentElement.getAttribute('data-theme') === 'light';
             const gradientBg = isLight ? 'linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent)' : 'linear-gradient(to right, rgba(239, 68, 68, 0.15), rgba(31, 41, 55, 0))';
-            
+
             const periodText = isAllMonths ? 'Keseluruhan Waktu' : targetMonthYear.split(' ')[0];
 
             const html = `
@@ -1395,10 +1493,10 @@
                     </ul>
                 </div>
             `;
-            
+
             document.getElementById('ai-insights-container').innerHTML = html;
         }
-        
+
         const reportJagoCache = {};
         async function fetchJagoData() {
             try {
@@ -1407,7 +1505,7 @@
                 if (filterSelect && filterSelect.value) {
                     monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
                 }
-                
+
                 let result;
                 if (reportJagoCache[monthParam]) {
                     result = reportJagoCache[monthParam];
@@ -1416,7 +1514,7 @@
                     result = await response.json();
                     if (result.success) reportJagoCache[monthParam] = result;
                 }
-                
+
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
                     if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
@@ -1430,7 +1528,7 @@
                             filterSelect.appendChild(option);
                         });
                     }
-                    
+
                     renderJagoPieChartAndTable(result.data);
                     renderJagoChart(result.data); // Keep the bar chart too if needed
                 } else {
@@ -1440,22 +1538,22 @@
                 console.error('Network error fetching Jago data:', error);
             }
         }
-        
+
         function renderJagoPieChartAndTable(data) {
             let totalAmount = 0;
             let totalCount = 0;
             const labels = [];
             const amounts = [];
-            
+
             data.sort((a, b) => b.total - a.total); // Sort descending by total
-            
+
             let html = '';
             data.forEach(item => {
                 labels.push(item.unit);
                 amounts.push(item.total);
                 totalAmount += item.total;
                 totalCount += item.count;
-                
+
                 html += `
                     <tr style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-input)'" onmouseout="this.style.backgroundColor='transparent'" onclick="showUnitDetails('${item.unit}')">
                         <td style="font-weight: 500; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;"><i class="ri-search-eye-line"></i> ${item.unit}</td>
@@ -1464,7 +1562,7 @@
                     </tr>
                 `;
             });
-            
+
             // Add Total row
             html += `
                 <tr style="background: var(--bg-main);">
@@ -1473,29 +1571,29 @@
                     <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem;">${formatRupiah(totalAmount)}</td>
                 </tr>
             `;
-            
+
             const tbody = document.getElementById('report-summary-body');
             if (data.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 tbody.innerHTML = html;
             }
-            
+
             // Update Pie Chart
             const ctx = document.getElementById('unitPieChart');
             if (!ctx) return;
-            
+
             if (unitChart) {
                 unitChart.destroy();
             }
-            
+
             if (labels.length > 0) {
                 const bgColors = [
-                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', 
+                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899',
                     '#ef4444', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9',
                     '#6366f1', '#f97316', '#d946ef', '#eab308', '#06b6d4'
                 ];
-                
+
                 unitChart = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
@@ -1513,14 +1611,14 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { 
+                                labels: {
                                     color: document.documentElement.getAttribute('data-theme') === 'light' ? '#1f2937' : '#f9fafb',
                                     padding: 20
                                 }
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         let label = context.label || '';
                                         if (label) label += ': ';
                                         if (context.parsed !== null) {
@@ -1535,23 +1633,23 @@
                 });
             }
         }
-        
+
         function renderJagoChart(data) {
             const ctx = document.getElementById('jagoChart');
             if (!ctx) return;
-            
+
             if (jagoChart) {
                 jagoChart.destroy();
             }
-            
+
             // Sort by total descending
             data.sort((a, b) => b.total - a.total);
-            
+
             const labels = data.map(d => d.unit);
             const values = data.map(d => d.total);
-            
+
             const bgColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
-            
+
             jagoChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -1574,9 +1672,9 @@
                             },
                             ticks: {
                                 color: document.documentElement.getAttribute('data-theme') === 'light' ? '#6b7280' : '#9ca3af',
-                                callback: function(value) {
-                                    if (value >= 1000000) return 'Rp ' + (value/1000000) + 'M';
-                                    if (value >= 1000) return 'Rp ' + (value/1000) + 'k';
+                                callback: function (value) {
+                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'M';
+                                    if (value >= 1000) return 'Rp ' + (value / 1000) + 'k';
                                     return 'Rp ' + value;
                                 }
                             }
@@ -1592,7 +1690,7 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
                                 }
                             }
@@ -1607,36 +1705,36 @@
                 showAlert('Data detail belum siap, silakan tunggu sebentar...', 'warning');
                 return;
             }
-            
+
             const filterSelect = document.getElementById('global-month-filter');
             const selectedMonth = filterSelect ? filterSelect.value : '';
-            
+
             const headerRow = window.rawJagoData[0];
-            const isSplitCols = (headerRow.length >= 8) || 
-                              (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
-                              (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
+            const isSplitCols = (headerRow.length >= 8) ||
+                (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
+                (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
             const CUTOFF_DATE = new Date(2026, 6, 30);
-            
+
             const details = [];
-            
+
             for (let i = 1; i < window.rawJagoData.length; i++) {
                 const row = window.rawJagoData[i];
                 let rowDate = parseDateSafeClient(row[0]);
                 if (!rowDate || rowDate < CUTOFF_DATE) continue;
-                
+
                 let monthYear = '';
                 try {
                     const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
                     monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 if (selectedMonth && selectedMonth !== 'Semua Bulan' && monthYear !== selectedMonth) {
-                    continue; 
+                    continue;
                 }
-                
+
                 let expense = 0;
                 let unit = 'Lainnya';
-                
+
                 if (isSplitCols) {
                     let keluar = parseFloat(row[5]) || 0;
                     if (keluar > 0) expense = keluar;
@@ -1646,11 +1744,11 @@
                     if (amount < 0) expense = Math.abs(amount);
                     unit = row[6] || 'Lainnya';
                 }
-                
+
                 if (expense > 0 && unit === unitName) {
-                    const dateStr = ('0' + rowDate.getDate()).slice(-2) + ' ' + 
-                                  ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][rowDate.getMonth()] + ' ' + 
-                                  rowDate.getFullYear();
+                    const dateStr = ('0' + rowDate.getDate()).slice(-2) + ' ' +
+                        ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][rowDate.getMonth()] + ' ' +
+                        rowDate.getFullYear();
                     details.push({
                         date: dateStr,
                         rawDate: rowDate,
@@ -1660,9 +1758,9 @@
                     });
                 }
             }
-            
-            details.sort((a,b) => b.rawDate - a.rawDate);
-            
+
+            details.sort((a, b) => b.rawDate - a.rawDate);
+
             const tbody = document.getElementById('unit-details-body');
             if (details.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem;">Tidak ada detail transaksi untuk unit ini di bulan terpilih.</td></tr>`;
@@ -1688,7 +1786,7 @@
                 `;
                 tbody.innerHTML = html;
             }
-            
+
             document.getElementById('modal-unit-title').innerText = `Detail Pengeluaran: ${unitName}`;
             document.getElementById('unit-details-modal').style.display = 'flex';
         }
@@ -1699,12 +1797,12 @@
                 tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="ri-inbox-line" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #d1d5db;"></i>Belum ada data pengajuan</td></tr>`;
                 return;
             }
-            
+
             let html = '';
             data.forEach(item => {
                 let dateStr = item.Tanggal;
                 if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
-                
+
                 let actionHtml = '';
                 if (item.Status === 'Pending') {
                     actionHtml = `
@@ -1714,7 +1812,7 @@
                 } else {
                     actionHtml = `<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>`;
                 }
-                
+
                 let buktiHtml = '';
                 if (item.Bukti_Path) buktiHtml += `<a href="${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>`;
                 if (item.Bukti_TF_Path) buktiHtml += `<br><a href="${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>`;
@@ -1747,7 +1845,7 @@
             document.getElementById('tf-upload-input').click();
         }
 
-        document.getElementById('tf-upload-input').addEventListener('change', function(e) {
+        document.getElementById('tf-upload-input').addEventListener('change', function (e) {
             if (this.files && this.files[0]) {
                 if (confirm('Kirim bukti transfer dan setujui pengajuan ini?')) {
                     processUpdate(this.files[0]);
@@ -1770,15 +1868,15 @@
                 row_index: pendingUpdateRowId,
                 status: pendingUpdateStatus
             };
-            
+
             showAlert('Memproses update...', 'success');
-            
+
             if (file) {
                 payload.fileName = file.name;
                 payload.mimeType = file.type;
-                
+
                 const reader = new FileReader();
-                reader.onload = async function() {
+                reader.onload = async function () {
                     payload.fileData = reader.result;
                     sendUpdatePayload(payload);
                 };
@@ -1795,7 +1893,7 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('Status berhasil diupdate!', 'success');
                     fetchData(); // reload table
@@ -1815,7 +1913,7 @@
                 if (filterSelect && filterSelect.value) {
                     monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
                 }
-                
+
                 let result;
                 if (reportNeracaCache[monthParam]) {
                     result = reportNeracaCache[monthParam];
@@ -1824,7 +1922,7 @@
                     result = await response.json();
                     if (result.success) reportNeracaCache[monthParam] = result;
                 }
-                
+
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
                     if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
@@ -1838,7 +1936,7 @@
                             filterSelect.appendChild(option);
                         });
                     }
-                    
+
                     renderNeracaTable(result.data);
                 } else {
                     console.error('Failed to fetch Neraca data:', result.message);
@@ -1849,31 +1947,31 @@
                 document.getElementById('neraca-body').innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--danger-color);">Error koneksi saat memuat neraca.</td></tr>`;
             }
         }
-        
+
         function renderNeracaTable(data) {
             const tbody = document.getElementById('neraca-body');
-            
+
             let startIndex = 0;
             if (data.length > 0 && data[0][0] === "Nama Akun") {
                 startIndex = 1;
             }
-            
+
             if (data.length <= startIndex) {
                 tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Data neraca kosong.</td></tr>`;
                 return;
             }
-            
+
             let html = '';
             for (let i = startIndex; i < data.length; i++) {
                 const row = data[i];
                 const namaAkun = row[0] || '';
                 const debit = (row[1] !== '' && row[1] !== null && row[1] !== undefined) ? formatRupiah(row[1]) : '-';
                 const kredit = (row[2] !== '' && row[2] !== null && row[2] !== undefined) ? formatRupiah(row[2]) : '-';
-                
+
                 let rowStyle = '';
                 let nameStyle = '';
                 let valStyle = '';
-                
+
                 if (namaAkun === "Saldo Awal" || namaAkun.toUpperCase() === "SALDO AKHIR") {
                     rowStyle = 'background: var(--bg-main);';
                     nameStyle = 'font-weight: 700;';
@@ -1886,7 +1984,7 @@
                     html += `<tr><td colspan="3" style="height: 15px;"></td></tr>`;
                     continue;
                 }
-                
+
                 html += `
                     <tr style="${rowStyle}">
                         <td style="${nameStyle}">${namaAkun}</td>
@@ -1895,7 +1993,7 @@
                     </tr>
                 `;
             }
-            
+
             tbody.innerHTML = html;
         }
 
@@ -1908,7 +2006,7 @@
             localStorage.setItem('theme', newTheme);
             document.getElementById('theme-icon').className = newTheme === 'light' ? 'ri-moon-line' : 'ri-sun-line';
         }
-        
+
         window.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.getElementById('theme-icon').className = savedTheme === 'light' ? 'ri-moon-line' : 'ri-sun-line';
@@ -1916,4 +2014,5 @@
         });
     </script>
 </body>
+
 </html>
