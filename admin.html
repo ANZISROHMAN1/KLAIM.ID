@@ -929,14 +929,21 @@
 
             let totalEstimasi = 0;
             let html = `<table class="modern-table" style="margin-top: 0.5rem; font-size: 0.9rem;">
-                <thead><tr><th style="padding: 0.5rem; background: var(--bg-main);">Keterangan Rencana</th><th style="padding: 0.5rem; text-align: right; background: var(--bg-main);">Estimasi Budget</th></tr></thead><tbody>`;
+                <thead><tr>
+                    <th style="padding: 0.5rem; background: var(--bg-main);">Keterangan Rencana</th>
+                    <th style="padding: 0.5rem; background: var(--bg-main);">Unit</th>
+                    <th style="padding: 0.5rem; background: var(--bg-main);">Detail</th>
+                    <th style="padding: 0.5rem; text-align: right; background: var(--bg-main);">Estimasi Budget</th>
+                </tr></thead><tbody>`;
 
             data.forEach(item => {
                 let amount = parseFloat(item.amount) || 0;
                 totalEstimasi += amount;
                 html += `<tr>
-                    <td style="padding: 0.5rem;">${item.desc}</td>
-                    <td style="padding: 0.5rem; text-align: right;">${formatRupiah(amount)}</td>
+                    <td style="padding: 0.5rem;">${item.desc || '-'}</td>
+                    <td style="padding: 0.5rem;">${item.unit || '-'}</td>
+                    <td style="padding: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">${item.ket || '-'}</td>
+                    <td style="padding: 0.5rem; text-align: right; font-weight: 500;">${formatRupiah(amount)}</td>
                 </tr>`;
             });
 
