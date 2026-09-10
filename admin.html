@@ -224,11 +224,11 @@
                         </div>
                         <div id="planning-container" onclick="openPlanningModal()" style="margin-top: 1rem; padding: 1.5rem; background: var(--bg-input); border: 1px dashed var(--border-color); border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; transition: var(--transition-fast);">
                             <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-weight: 600;">
-                                <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-edit-2-line"></i> Planning Sisa Saldo</span>
+                                <span style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-edit-2-line"></i> Rencana & Estimasi Budget</span>
                                 <span style="font-size: 0.8rem; background: var(--bg-main); padding: 0.2rem 0.5rem; border-radius: 4px;">Klik untuk edit</span>
                             </div>
                             <div id="planning-content" style="color: var(--text-main); font-size: 0.95rem; white-space: pre-wrap; line-height: 1.5; padding-top: 0.5rem;">
-                                <span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>
+                                <span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat rencana...</span>
                             </div>
                         </div>
                     </div>
@@ -341,18 +341,39 @@
     <div id="planning-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px;">
         <div style="max-width: 600px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid var(--border-color);">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--bg-main);">
-                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);">📝 Edit Planning Saldo</h2>
+                <h2 style="margin: 0; font-size: 1.25rem; color: var(--text-main);">📝 Rencana & Estimasi Budget</h2>
                 <button onclick="document.getElementById('planning-modal').style.display='none'" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center;"><i class="ri-close-line"></i></button>
             </div>
             <div style="padding: 1.5rem; overflow-y: auto;">
-                <p style="margin-top: 0; margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">
-                    Bulan: <strong id="planning-modal-month" style="color: var(--text-main);"></strong>
-                </p>
-                <textarea id="planning-textarea" class="form-control" style="width: 100%; height: 200px; resize: vertical; padding: 1rem; font-family: inherit; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-input); color: var(--text-main);" placeholder="1. Beli alat tulis kantor...&#10;2. Bayar tagihan internet..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">
+                        Periode: <strong id="planning-modal-month" style="color: var(--text-main);"></strong>
+                    </p>
+                    <div style="background: var(--bg-input); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+                        Sisa Saldo Awal: <strong id="planning-modal-saldo" style="color: var(--success-color);">Rp 0</strong>
+                    </div>
+                </div>
+                
+                <div id="planning-rows-container" style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+                    <!-- Rows will be injected here -->
+                </div>
+                
+                <button onclick="addPlanRow()" class="btn btn-sm" style="background: transparent; color: var(--primary-color); border: 1px dashed var(--primary-color); width: 100%; padding: 0.75rem;"><i class="ri-add-line"></i> Tambah Rencana Baru</button>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                        <span style="color: var(--text-muted);">Total Estimasi Budget:</span>
+                        <strong id="planning-modal-total-budget" style="color: var(--danger-color);">Rp 0</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.05rem; font-weight: bold;">
+                        <span>Proyeksi Sisa Saldo Akhir:</span>
+                        <span id="planning-modal-proyeksi-saldo" style="color: var(--success-color);">Rp 0</span>
+                    </div>
+                </div>
             </div>
             <div style="padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 1rem; background: var(--bg-main);">
                 <button onclick="document.getElementById('planning-modal').style.display='none'" class="btn" style="background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">Batal</button>
-                <button onclick="savePlanningData()" id="btn-save-planning" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-save-line"></i> Simpan Planning</button>
+                <button onclick="savePlanningData()" id="btn-save-planning" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem;"><i class="ri-save-line"></i> Simpan Estimasi</button>
             </div>
         </div>
     </div>
