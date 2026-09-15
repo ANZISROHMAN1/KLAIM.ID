@@ -1425,12 +1425,7 @@
                 }
             });
 
-            // Ambil saldo dari window.currentAiSaldo yang sudah di-set akurat oleh fetchNeracaData
-            // JIKA Semua Bulan, kembalikan ke logika awal (currentMonthData[0].balance)
-            let saldo = window.currentAiSaldo !== undefined ? window.currentAiSaldo : (currentMonthData.length > 0 ? currentMonthData[0].balance : 0);
-            if (isAllMonths && currentMonthData.length > 0) {
-                saldo = currentMonthData[0].balance;
-            }
+            let saldo = totalMasuk - totalKeluar;
             window.currentAiSaldo = saldo;
 
             let biggestUnit = 'Tanpa Unit';
