@@ -111,11 +111,11 @@ function doGet(e) {
       var unit = 'Tanpa Unit';
       
       if (isSplitCols) {
-        var keluar = parseFloat(jagoData[k][5]) || 0;
+        var keluar = parseAmountSafe(jagoData[k][5]);
         if (keluar > 0) expense = keluar;
         unit = jagoData[k][7] || 'Tanpa Unit';
       } else {
-        var amount = parseFloat(jagoData[k][4]) || 0;
+        var amount = parseAmountSafe(jagoData[k][4]);
         if (amount < 0) expense = Math.abs(amount);
         unit = jagoData[k][6] || 'Tanpa Unit';
       }
@@ -832,8 +832,8 @@ function updateNeracaKeuangan() {
       var notes = (data[i][3] || "").toString();
       
       if (isSplitCols) {
-        var masuk = parseFloat(data[i][4]) || 0;
-        var keluar = parseFloat(data[i][5]) || 0;
+        var masuk = parseAmountSafe(data[i][4]);
+        var keluar = parseAmountSafe(data[i][5]);
         if (masuk < 0) {
             keluar = Math.abs(masuk);
             masuk = 0;
@@ -841,17 +841,17 @@ function updateNeracaKeuangan() {
         rawAmount = masuk > 0 ? masuk : (keluar > 0 ? -keluar : 0);
         
         var colG = data[i][6];
-        if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1) {
+        if (typeof colG === 'string' && isNaN(parseAmountSafe(colG)) && colG.length > 1) {
             // User likely pasted using old format: Unit is in Col G, Balance is in Col F, Amount in Col E
             unit = colG;
-            balance = parseFloat(data[i][5]) || 0;
+            balance = parseAmountSafe(data[i][5]);
         } else {
-            balance = parseFloat(data[i][6]) || 0;
+            balance = parseAmountSafe(data[i][6]);
             unit = data[i][7] || 'Tanpa Unit';
         }
       } else {
-        rawAmount = parseFloat(data[i][4]) || 0;
-        balance = parseFloat(data[i][5]) || 0;
+        rawAmount = parseAmountSafe(data[i][4]);
+        balance = parseAmountSafe(data[i][5]);
         unit = data[i][6] || 'Tanpa Unit';
       }
       
@@ -1048,4 +1048,29 @@ function updateNeracaKeuangan() {
   
   neracaSheet.getRange(2, 2, neracaData.length - 1, 2).setNumberFormat('"Rp" #,##0');
   neracaSheet.autoResizeColumns(1, 3);
+}
+
+
+function parseAmountSafe(val) {
+    if (typeof val === 'number') return val;
+    if (!val) return 0;
+    var str = val.toString().trim();
+    if (str === '-' || str === '') return 0;
+    str = str.replace(/rp/gi, '').replace(/\s/g, '');
+    var isNegative = false;
+    if (str.startsWith('-') || str.startsWith('(')) {
+       isNegative = true;
+       str = str.replace(/[-\(\)]/g, '');
+    }
+    var lastComma = str.lastIndexOf(',');
+    var lastDot = str.lastIndexOf('.');
+    if (lastComma > lastDot) {
+        str = str.replace(/\./g, '').replace(/,/g, '.');
+    } else if (lastDot > lastComma) {
+        str = str.replace(/,/g, '');
+    } else {
+        str = str.replace(/[.,]/g, '');
+    }
+    var amount = parseFloat(str) || 0;
+    return isNegative ? -amount : amount;
 }

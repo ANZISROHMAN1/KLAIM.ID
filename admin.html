@@ -1117,7 +1117,32 @@
 
         let trendChartInstance = null;
 
-        function parseDateSafeClient(val) {
+        
+        function parseAmountSafeClient(val) {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            var str = val.toString().trim();
+            if (str === '-' || str === '') return 0;
+            str = str.replace(/rp/gi, '').replace(/\s/g, '');
+            var isNegative = false;
+            if (str.startsWith('-') || str.startsWith('(')) {
+               isNegative = true;
+               str = str.replace(/[-\(\)]/g, '');
+            }
+            var lastComma = str.lastIndexOf(',');
+            var lastDot = str.lastIndexOf('.');
+            if (lastComma > lastDot) {
+                str = str.replace(/\./g, '').replace(/,/g, '.');
+            } else if (lastDot > lastComma) {
+                str = str.replace(/,/g, '');
+            } else {
+                str = str.replace(/[.,]/g, '');
+            }
+            var amount = parseFloat(str) || 0;
+            return isNegative ? -amount : amount;
+        }
+
+function parseDateSafeClient(val) {
             if (!val) return null;
             var dStr = val.toString();
             var dateMatch = dStr.match(/(\d{1,2}\s+[a-zA-Z]{3}\s+\d{4})/);
@@ -1196,10 +1221,10 @@
                 let keluar = 0;
 
                 if (isSplitCols) {
-                    masuk = parseFloat(data[i][4]) || 0;
-                    keluar = parseFloat(data[i][5]) || 0;
+                    masuk = parseAmountSafeClient(data[i][4]);
+                    keluar = parseAmountSafeClient(data[i][5]);
                 } else {
-                    let amount = parseFloat(data[i][4]) || 0;
+                    let amount = parseAmountSafeClient(data[i][4]);
                     if (amount > 0) masuk = amount;
                     else if (amount < 0) keluar = Math.abs(amount);
                 }
@@ -1356,12 +1381,12 @@
                 let categoryRaw = '';
 
                 if (isSplitCols) {
-                    masuk = parseFloat(data[i][4]) || 0;
-                    keluar = parseFloat(data[i][5]) || 0;
+                    masuk = parseAmountSafeClient(data[i][4]);
+                    keluar = parseAmountSafeClient(data[i][5]);
                     unit = data[i][7] || 'Tanpa Unit';
                     categoryRaw = (data[i][2] || '').toString().toLowerCase();
                 } else {
-                    let amount = parseFloat(data[i][4]) || 0;
+                    let amount = parseAmountSafeClient(data[i][4]);
                     if (amount > 0) masuk = amount;
                     else if (amount < 0) keluar = Math.abs(amount);
                     unit = data[i][6] || 'Tanpa Unit';
@@ -1377,9 +1402,9 @@
 
                 let balance = 0;
                 if (isSplitCols) {
-                    balance = parseFloat(data[i][6]) || 0;
+                    balance = parseAmountSafeClient(data[i][6]);
                 } else {
-                    balance = parseFloat(data[i][5]) || 0;
+                    balance = parseAmountSafeClient(data[i][5]);
                 }
 
                 parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category, balance: balance });
