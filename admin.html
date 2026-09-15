@@ -1521,6 +1521,38 @@
                         ${diffHtml}
                     </ul>
                 </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                    <!-- Kas Masuk Card -->
+                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="ri-arrow-right-down-line"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(totalMasuk)}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Kas Masuk</div>
+                        </div>
+                    </div>
+                    <!-- Kas Keluar Card -->
+                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(31, 41, 55, 0.08); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="ri-arrow-right-up-line"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(totalKeluar)}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Kas Keluar</div>
+                        </div>
+                    </div>
+                    <!-- Sisa Saldo Card -->
+                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                            <i class="ri-wallet-3-fill"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(saldo)}</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Sisa Saldo</div>
+                        </div>
+                    </div>
+                </div>
             `;
 
             document.getElementById('ai-insights-container').innerHTML = html;
