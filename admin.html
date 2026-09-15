@@ -630,7 +630,7 @@
             }
 
             try {
-                const response = await fetch(SCRIPT_URL + '?action=list');
+                const response = await fetch(SCRIPT_URL + '?action=list&t=' + new Date().getTime());
                 const result = await response.json();
 
                 if (result.success) {
@@ -903,6 +903,10 @@
             }
         }
         async function fetchReportData() {
+            for (let key in reportJagoCache) delete reportJagoCache[key];
+            for (let key in reportNeracaCache) delete reportNeracaCache[key];
+            for (let key in reportPlanningCache) delete reportPlanningCache[key];
+            
             fetchJagoData();
             await fetchNeracaData();
             fetchInsights().then(() => {
@@ -982,7 +986,7 @@
                 if (reportPlanningCache[monthVal] !== undefined) {
                     textFound = reportPlanningCache[monthVal];
                 } else {
-                    const response = await fetch(SCRIPT_URL + '?action=get_planning' + monthParam);
+                    const response = await fetch(SCRIPT_URL + '?action=get_planning' + monthParam + '&t=' + new Date().getTime());
                     const result = await response.json();
                     if (result.success) {
                         textFound = result.data || '';
@@ -1371,7 +1375,14 @@
                 else if (categoryRaw.includes('biaya') || categoryRaw.includes('admin') || categoryRaw.includes('fee')) category = 'Biaya Admin';
                 else if (categoryRaw.includes('tarik tunai')) category = 'Tarik Tunai';
 
-                parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category });
+                let balance = 0;
+                if (isSplitCols) {
+                    balance = parseFloat(data[i][6]) || 0;
+                } else {
+                    balance = parseFloat(data[i][5]) || 0;
+                }
+
+                parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category, balance: balance });
             }
 
             if (parsedData.length === 0) {
@@ -1414,7 +1425,12 @@
                 }
             });
 
-            let saldo = totalMasuk - totalKeluar;
+            // Ambil saldo dari window.currentAiSaldo yang sudah di-set akurat oleh fetchNeracaData
+            // JIKA Semua Bulan, kembalikan ke logika awal (currentMonthData[0].balance)
+            let saldo = window.currentAiSaldo !== undefined ? window.currentAiSaldo : (currentMonthData.length > 0 ? currentMonthData[0].balance : 0);
+            if (isAllMonths && currentMonthData.length > 0) {
+                saldo = currentMonthData[0].balance;
+            }
             window.currentAiSaldo = saldo;
 
             let biggestUnit = 'Tanpa Unit';
@@ -1523,7 +1539,7 @@
                 if (reportJagoCache[monthParam]) {
                     result = reportJagoCache[monthParam];
                 } else {
-                    const response = await fetch(SCRIPT_URL + '?action=jago_data' + monthParam);
+                    const response = await fetch(SCRIPT_URL + '?action=jago_data' + monthParam + '&t=' + new Date().getTime());
                     result = await response.json();
                     if (result.success) reportJagoCache[monthParam] = result;
                 }
@@ -1931,12 +1947,22 @@
                 if (reportNeracaCache[monthParam]) {
                     result = reportNeracaCache[monthParam];
                 } else {
-                    const response = await fetch(`${SCRIPT_URL}?action=neraca_data${monthParam}`);
+                    const response = await fetch(`${SCRIPT_URL}?action=neraca_data${monthParam}&t=${new Date().getTime()}`);
                     result = await response.json();
                     if (result.success) reportNeracaCache[monthParam] = result;
                 }
 
                 if (result.success && result.data) {
+                    // Ekstrak Saldo Akhir yang akurat dari data Neraca
+                    let saldoAkhir = 0;
+                    for (let i = 0; i < result.data.length; i++) {
+                        if (result.data[i][0] && result.data[i][0].toString().toUpperCase() === "SALDO AKHIR") {
+                            saldoAkhir = parseFloat(result.data[i][1]) || 0;
+                            break;
+                        }
+                    }
+                    window.currentAiSaldo = saldoAkhir;
+
                     // Update global dropdown filter if it hasn't been populated
                     if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
                         const currentVal = filterSelect.value || result.currentMonth;

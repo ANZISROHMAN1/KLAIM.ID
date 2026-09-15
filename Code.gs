@@ -36,7 +36,10 @@ function getFormUserSheet(ss) {
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = getFormUserSheet(ss) || ss.getActiveSheet();
+  var sheet = getFormUserSheet(ss);
+  if (!sheet) {
+    sheet = ss.insertSheet('FORM USER');
+  }
   var data = sheet.getDataRange().getValues();
   var action = e.parameter.action;
   
@@ -141,8 +144,8 @@ function doGet(e) {
     })).setMimeType(ContentService.MimeType.JSON);
   } else if (action === 'neraca_data') {
     var neracaSheet = ss.getSheetByName('Neraca Keuangan');
-    var filterMonth = e.parameter.month;
-    if (filterMonth && neracaSheet) {
+    var filterMonth = e.parameter.month || "Semua Bulan";
+    if (neracaSheet) {
       neracaSheet.getRange("E2").setValue(filterMonth);
     }
     
@@ -207,7 +210,10 @@ function doPost(e) {
     var requestData = JSON.parse(e.postData.contents);
     var action = requestData.action;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = getFormUserSheet(ss) || ss.getActiveSheet();
+    var sheet = getFormUserSheet(ss);
+    if (!sheet) {
+      sheet = ss.insertSheet('FORM USER');
+    }
     
     // ID FOLDER SUDAH OTOMATIS SAYA MASUKKAN DI SINI! (TIDAK PERLU DIUBAH LAGI)
     var FOLDER_ID = '1GRHerfG8UMcQol4TY5HBvGS7NPXKYuL_'; 
@@ -828,9 +834,21 @@ function updateNeracaKeuangan() {
       if (isSplitCols) {
         var masuk = parseFloat(data[i][4]) || 0;
         var keluar = parseFloat(data[i][5]) || 0;
+        if (masuk < 0) {
+            keluar = Math.abs(masuk);
+            masuk = 0;
+        }
         rawAmount = masuk > 0 ? masuk : (keluar > 0 ? -keluar : 0);
-        balance = parseFloat(data[i][6]) || 0;
-        unit = data[i][7] || 'Tanpa Unit';
+        
+        var colG = data[i][6];
+        if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1) {
+            // User likely pasted using old format: Unit is in Col G, Balance is in Col F, Amount in Col E
+            unit = colG;
+            balance = parseFloat(data[i][5]) || 0;
+        } else {
+            balance = parseFloat(data[i][6]) || 0;
+            unit = data[i][7] || 'Tanpa Unit';
+        }
       } else {
         rawAmount = parseFloat(data[i][4]) || 0;
         balance = parseFloat(data[i][5]) || 0;
@@ -844,6 +862,7 @@ function updateNeracaKeuangan() {
         unit: unit,
         details: details,
         notes: notes,
+        rowIdx: i,
         row: data[i]
       });
       
@@ -870,8 +889,18 @@ function updateNeracaKeuangan() {
   // --- MULAI PERBAIKAN LOGIKA SALDO AWAL & MTD ---
   
   // 1. Pastikan allValidData diurutkan secara KRONOLOGIS (Terlama ke Terbaru)
+  var isDescending = false;
+  if (allValidData.length > 1) {
+     if (allValidData[0].date.getTime() > allValidData[allValidData.length - 1].date.getTime()) {
+         isDescending = true;
+     }
+  }
+
   allValidData.sort(function(a, b) {
-      return a.date.getTime() - b.date.getTime();
+      var timeDiff = a.date.getTime() - b.date.getTime();
+      if (timeDiff !== 0) return timeDiff;
+      if (isDescending) return b.rowIdx - a.rowIdx;
+      return a.rowIdx - b.rowIdx;
   });
   
   var filteredData = [];
@@ -902,10 +931,31 @@ function updateNeracaKeuangan() {
       return; 
   }
   
+  // Hitung total Pemasukan & Pengeluaran murni untuk memback-calculate Saldo Awal jika Semua Bulan
+  var purePemasukan = 0;
+  var purePengeluaran = 0;
+  for (var i = 0; i < filteredData.length; i++) {
+     if (filteredData[i].rawAmount > 0) purePemasukan += filteredData[i].rawAmount;
+     if (filteredData[i].rawAmount < 0) purePengeluaran += Math.abs(filteredData[i].rawAmount);
+  }
+  
   // 2. Tentukan Saldo Awal MTD
   var saldoAwal = 0;
   if (selectedFilter === "Semua Bulan") {
-      saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
+      // Cari balance terakhir yang valid (bukan 0)
+      var finalBalance = 0;
+      for (var k = filteredData.length - 1; k >= 0; k--) {
+          if (filteredData[k].balance && filteredData[k].balance !== 0) {
+              finalBalance = filteredData[k].balance;
+              break;
+          }
+      }
+      
+      if (finalBalance === 0 && filteredData.length > 0) {
+          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
+      } else {
+          saldoAwal = finalBalance - purePemasukan + purePengeluaran;
+      }
   } else {
       if (lastBalanceBeforeMTD !== 0) {
           saldoAwal = lastBalanceBeforeMTD; // Mengambil saldo akhir bulan N-1 dengan akurat
@@ -952,7 +1002,7 @@ function updateNeracaKeuangan() {
   neracaData.push(["PEMASUKAN", "", ""]);
   neracaData.push(["Saldo Awal", saldoAwal, ""]);
   
-  var totalPemasukan = saldoAwal;
+  var totalPemasukan = 0;
   for (var u in units) {
     if (units[u].debit > 0) {
       var prefix = (u === 'Tanpa Unit') ? "" : "Pemasukan / BODP ";
@@ -979,7 +1029,7 @@ function updateNeracaKeuangan() {
   neracaData.push(["", "", ""]);
   
   // --- SALDO AKHIR ---
-  saldoAkhir = totalPemasukan - totalPengeluaran;
+  saldoAkhir = saldoAwal + totalPemasukan - totalPengeluaran;
   neracaData.push(["SALDO AKHIR", saldoAkhir, ""]);
   
   neracaSheet.getRange(1, 1, neracaData.length, 3).setValues(neracaData);
