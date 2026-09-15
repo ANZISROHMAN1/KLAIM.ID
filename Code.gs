@@ -841,7 +841,7 @@ function updateNeracaKeuangan() {
         rawAmount = masuk > 0 ? masuk : (keluar > 0 ? -keluar : 0);
         
         var colG = data[i][6];
-        if (typeof colG === 'string' && isNaN(parseAmountSafe(colG)) && colG.length > 1) {
+        if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1) {
             // User likely pasted using old format: Unit is in Col G, Balance is in Col F, Amount in Col E
             unit = colG;
             balance = parseAmountSafe(data[i][5]);
@@ -939,37 +939,13 @@ function updateNeracaKeuangan() {
      if (filteredData[i].rawAmount < 0) purePengeluaran += Math.abs(filteredData[i].rawAmount);
   }
   
-  // 2. Tentukan Saldo Awal MTD
-  var saldoAwal = 0;
-  if (selectedFilter === "Semua Bulan") {
-      // Cari balance terakhir yang valid (bukan 0)
-      var finalBalance = 0;
-      for (var k = filteredData.length - 1; k >= 0; k--) {
-          if (filteredData[k].balance && filteredData[k].balance !== 0) {
-              finalBalance = filteredData[k].balance;
-              break;
-          }
-      }
-      
-      if (finalBalance === 0 && filteredData.length > 0) {
-          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
-      } else {
-          saldoAwal = finalBalance - purePemasukan + purePengeluaran;
-      }
-  } else {
-      if (lastBalanceBeforeMTD !== 0) {
-          saldoAwal = lastBalanceBeforeMTD; // Mengambil saldo akhir bulan N-1 dengan akurat
-      } else {
-          // Fallback jika tidak ada histori bulan N-1 di data Jago
-          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
-      }
-  }
-  
+  // 2. Aggregasi Transaksi
   var units = {};
   var totalDebit = 0;
   var totalKredit = 0;
+  var totalPemasukan = 0;
+  var totalPengeluaran = 0;
   
-  // 3. Pemasukan dan Pengeluaran hanya menggunakan arus kas (rawAmount) dari bulan MTD
   for (var i = 0; i < filteredData.length; i++) {
     var amount = filteredData[i].rawAmount;
     var unit = filteredData[i].unit;
@@ -986,11 +962,39 @@ function updateNeracaKeuangan() {
     if (amount > 0) {
       units[unit].debit += amount;
       totalKredit += amount;
+      totalPemasukan += amount;
     } else if (amount < 0) {
       var absAmount = Math.abs(amount);
       units[unit].kredit += absAmount;
       totalDebit += absAmount;
+      totalPengeluaran += absAmount;
     }
+  }
+
+  // 3. Tentukan Saldo Akhir riil, lalu hitung mundur Saldo Awal agar selalu cocok
+  var finalBalance = 0;
+  for (var k = 0; k < filteredData.length; k++) {
+      if (filteredData[k].balance && filteredData[k].balance !== 0) {
+          finalBalance = filteredData[k].balance;
+      } else if (finalBalance !== 0) {
+          // Terapkan penyesuaian dari baris manual yang tidak punya kolom balance
+          finalBalance += filteredData[k].rawAmount;
+      }
+  }
+  
+  var saldoAwal = 0;
+  if (finalBalance === 0) {
+      // Fallback jika tidak ada balance sama sekali
+      if (selectedFilter === "Semua Bulan") {
+          saldoAwal = filteredData.length > 0 ? (filteredData[0].balance - filteredData[0].rawAmount) : 0;
+          finalBalance = saldoAwal + totalPemasukan - totalPengeluaran;
+      } else {
+          saldoAwal = lastBalanceBeforeMTD !== 0 ? lastBalanceBeforeMTD : (filteredData.length > 0 ? (filteredData[0].balance - filteredData[0].rawAmount) : 0);
+          finalBalance = saldoAwal + totalPemasukan - totalPengeluaran;
+      }
+  } else {
+      // Hitung mundur saldo awal agar laporan keuangan selalu akurat dan balance
+      saldoAwal = finalBalance - totalPemasukan + totalPengeluaran;
   }
   
   neracaSheet.getRange("A:D").clear();
@@ -1000,14 +1004,12 @@ function updateNeracaKeuangan() {
   
   // --- BAGIAN PEMASUKAN ---
   neracaData.push(["PEMASUKAN", "", ""]);
-  neracaData.push(["Saldo Awal", saldoAwal, ""]);
+  neracaData.push(["Saldo Awal", saldoAwal > 0 ? saldoAwal : 0, saldoAwal < 0 ? Math.abs(saldoAwal) : ""]);
   
-  var totalPemasukan = 0;
   for (var u in units) {
     if (units[u].debit > 0) {
       var prefix = (u === 'Tanpa Unit') ? "" : "Pemasukan / BODP ";
       neracaData.push([prefix + u, units[u].debit, ""]);
-      totalPemasukan += units[u].debit;
     }
   }
   
@@ -1016,12 +1018,10 @@ function updateNeracaKeuangan() {
   
   // --- BAGIAN PENGELUARAN ---
   neracaData.push(["PENGELUARAN", "", ""]);
-  var totalPengeluaran = 0;
   for (var u in units) {
     if (units[u].kredit > 0) {
       var prefix = (u === 'Tanpa Unit') ? "" : "Operasional / BODP ";
       neracaData.push([prefix + u, "", units[u].kredit]);
-      totalPengeluaran += units[u].kredit;
     }
   }
   
@@ -1029,7 +1029,7 @@ function updateNeracaKeuangan() {
   neracaData.push(["", "", ""]);
   
   // --- SALDO AKHIR ---
-  saldoAkhir = saldoAwal + totalPemasukan - totalPengeluaran;
+  saldoAkhir = finalBalance;
   neracaData.push(["SALDO AKHIR", saldoAkhir, ""]);
   
   neracaSheet.getRange(1, 1, neracaData.length, 3).setValues(neracaData);
