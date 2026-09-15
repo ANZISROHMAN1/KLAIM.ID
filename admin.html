@@ -629,6 +629,10 @@
                 return;
             }
 
+            if (!isSilent) {
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #d1d5db;"></i>Memuat data pengajuan...</td></tr>`;
+            }
+
             try {
                 const response = await fetch(SCRIPT_URL + '?action=list&t=' + new Date().getTime());
                 const result = await response.json();
@@ -907,11 +911,18 @@
             for (let key in reportNeracaCache) delete reportNeracaCache[key];
             for (let key in reportPlanningCache) delete reportPlanningCache[key];
             
-            fetchJagoData();
-            await fetchNeracaData();
-            fetchInsights().then(() => {
-                fetchPlanningData();
-            });
+            // Set initial loading states
+            document.getElementById('report-summary-body').innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 1.5rem;"></i><br>Memuat data...</td></tr>`;
+            document.getElementById('neraca-body').innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 1.5rem;"></i><br>Memuat neraca...</td></tr>`;
+            document.getElementById('ai-insights-container').innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem;"><i class="ri-loader-4-line ri-spin" style="font-size: 2rem;"></i><br>Menganalisis...</div>`;
+            document.getElementById('planning-content').innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem;"><i class="ri-loader-4-line ri-spin" style="font-size: 1.5rem;"></i><br>Memuat AI Planning...</div>`;
+            
+            // Run all independent requests concurrently to vastly improve perceived performance
+            const pJago = fetchJagoData();
+            const pNeracaAndPlanning = fetchNeracaData().then(() => fetchPlanningData());
+            const pInsights = fetchInsights();
+            
+            await Promise.all([pJago, pNeracaAndPlanning, pInsights]);
         }
 
         const reportPlanningCache = {};
