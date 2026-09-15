@@ -111,11 +111,11 @@ function doGet(e) {
       var unit = 'Tanpa Unit';
       
       if (isSplitCols) {
-        var keluar = parseAmountSafe(jagoData[k][5]);
+        var keluar = parseFloat(jagoData[k][5]) || 0;
         if (keluar > 0) expense = keluar;
         unit = jagoData[k][7] || 'Tanpa Unit';
       } else {
-        var amount = parseAmountSafe(jagoData[k][4]);
+        var amount = parseFloat(jagoData[k][4]) || 0;
         if (amount < 0) expense = Math.abs(amount);
         unit = jagoData[k][6] || 'Tanpa Unit';
       }
@@ -146,6 +146,7 @@ function doGet(e) {
     var neracaSheet = ss.getSheetByName('Neraca Keuangan');
     var filterMonth = e.parameter.month || "Semua Bulan";
     if (neracaSheet) {
+      neracaSheet.getRange("E2").setNumberFormat("@");
       neracaSheet.getRange("E2").setValue(filterMonth);
     }
     
@@ -183,19 +184,38 @@ function doGet(e) {
     var jagoSheet = ss.getSheetByName('REKAPAN JAGO');
     var jagoData = jagoSheet ? jagoSheet.getDataRange().getValues() : [];
     return ContentService.createTextOutput(JSON.stringify({success: true, data: jagoData})).setMimeType(ContentService.MimeType.JSON);
+  } else if (action === 'debug_neraca_filter') {
+    var jagoSheet = ss.getSheetByName('REKAPAN JAGO');
+    var data = jagoSheet.getDataRange().getValues();
+    var CUTOFF_DATE = new Date(2026, 6, 30);
+    var monthsSet = {};
+    for (var i = 1; i < data.length; i++) {
+        if (!data[i][0] || data[i][0] === "") continue;
+        var rowDate = parseDateSafe(data[i][0]);
+        if (rowDate && rowDate >= CUTOFF_DATE) {
+            var monthYear = Utilities.formatDate(rowDate, Session.getScriptTimeZone(), "MMMM yyyy");
+            monthYear = monthYear.replace('January', 'Januari').replace('February', 'Februari').replace('March', 'Maret').replace('May', 'Mei').replace('June', 'Juni').replace('July', 'Juli').replace('August', 'Agustus').replace('October', 'Oktober').replace('December', 'Desember');
+            monthsSet[monthYear] = true;
+        }
+    }
+    var neracaSheet = ss.getSheetByName('Neraca Keuangan');
+    var selectedFilter = e.parameter.month || "September 2026";
+    var isSet = !!monthsSet[selectedFilter];
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      monthsSet: Object.keys(monthsSet),
+      requestedFilter: selectedFilter,
+      isFoundInSet: isSet
+    })).setMimeType(ContentService.MimeType.JSON);
   } else if (action === 'get_planning') {
     var planSheet = ss.getSheetByName('PLANNING_SALDO');
     if (!planSheet) {
       return ContentService.createTextOutput(JSON.stringify({success: true, data: ''})).setMimeType(ContentService.MimeType.JSON);
     }
     var planData = planSheet.getDataRange().getValues();
-    var filterMonth = e.parameter.month || 'Semua Bulan';
     var textFound = '';
-    for (var i = 1; i < planData.length; i++) {
-      if (planData[i][1] === filterMonth) {
-        textFound = planData[i][2];
-        break;
-      }
+    if (planData.length > 1) {
+      textFound = planData[1][2]; // Selalu ambil dari baris pertama (GLOBAL)
     }
     return ContentService.createTextOutput(JSON.stringify({success: true, data: textFound})).setMimeType(ContentService.MimeType.JSON);
   }
@@ -276,18 +296,12 @@ function doPost(e) {
       var now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
       
       var planData = planSheet.getDataRange().getValues();
-      var found = false;
-      for (var i = 1; i < planData.length; i++) {
-        if (planData[i][1] === filterMonth) {
-          planSheet.getRange(i + 1, 1).setValue(now);
-          planSheet.getRange(i + 1, 3).setValue(textData);
-          found = true;
-          break;
-        }
-      }
-      
-      if (!found) {
-        planSheet.appendRow([now, filterMonth, textData]);
+      if (planData.length > 1) {
+          planSheet.getRange(2, 1).setValue(now);
+          planSheet.getRange(2, 2).setValue("GLOBAL");
+          planSheet.getRange(2, 3).setValue(textData);
+      } else {
+          planSheet.appendRow([now, "GLOBAL", textData]);
       }
       
       return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
@@ -832,8 +846,8 @@ function updateNeracaKeuangan() {
       var notes = (data[i][3] || "").toString();
       
       if (isSplitCols) {
-        var masuk = parseAmountSafe(data[i][4]);
-        var keluar = parseAmountSafe(data[i][5]);
+        var masuk = parseFloat(data[i][4]) || 0;
+        var keluar = parseFloat(data[i][5]) || 0;
         if (masuk < 0) {
             keluar = Math.abs(masuk);
             masuk = 0;
@@ -844,14 +858,14 @@ function updateNeracaKeuangan() {
         if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1) {
             // User likely pasted using old format: Unit is in Col G, Balance is in Col F, Amount in Col E
             unit = colG;
-            balance = parseAmountSafe(data[i][5]);
+            balance = parseFloat(data[i][5]) || 0;
         } else {
-            balance = parseAmountSafe(data[i][6]);
+            balance = parseFloat(data[i][6]) || 0;
             unit = data[i][7] || 'Tanpa Unit';
         }
       } else {
-        rawAmount = parseAmountSafe(data[i][4]);
-        balance = parseAmountSafe(data[i][5]);
+        rawAmount = parseFloat(data[i][4]) || 0;
+        balance = parseFloat(data[i][5]) || 0;
         unit = data[i][6] || 'Tanpa Unit';
       }
       
@@ -875,9 +889,19 @@ function updateNeracaKeuangan() {
   var availableMonths = Object.keys(monthsSet);
   
   // Baca filter dari E2 Neraca Keuangan
-  var selectedFilter = neracaSheet.getRange("E2").getValue();
+  var filterRaw = neracaSheet.getRange("E2").getValue();
+  var selectedFilter = "";
+  
+  if (filterRaw instanceof Date) {
+      var monthYearFmt = Utilities.formatDate(filterRaw, Session.getScriptTimeZone(), "MMMM yyyy");
+      selectedFilter = monthYearFmt.replace('January', 'Januari').replace('February', 'Februari').replace('March', 'Maret').replace('May', 'Mei').replace('June', 'Juni').replace('July', 'Juli').replace('August', 'Agustus').replace('October', 'Oktober').replace('December', 'Desember');
+  } else if (filterRaw) {
+      selectedFilter = filterRaw.toString().trim();
+  }
+  
   if (!selectedFilter || (selectedFilter !== "Semua Bulan" && !monthsSet[selectedFilter])) {
       selectedFilter = "Semua Bulan";
+      neracaSheet.getRange("E2").setNumberFormat("@");
       neracaSheet.getRange("E2").setValue(selectedFilter);
   }
   
@@ -939,13 +963,37 @@ function updateNeracaKeuangan() {
      if (filteredData[i].rawAmount < 0) purePengeluaran += Math.abs(filteredData[i].rawAmount);
   }
   
-  // 2. Aggregasi Transaksi
+  // 2. Tentukan Saldo Awal MTD
+  var saldoAwal = 0;
+  if (selectedFilter === "Semua Bulan") {
+      // Cari balance terakhir yang valid (bukan 0)
+      var finalBalance = 0;
+      for (var k = filteredData.length - 1; k >= 0; k--) {
+          if (filteredData[k].balance && filteredData[k].balance !== 0) {
+              finalBalance = filteredData[k].balance;
+              break;
+          }
+      }
+      
+      if (finalBalance === 0 && filteredData.length > 0) {
+          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
+      } else {
+          saldoAwal = finalBalance - purePemasukan + purePengeluaran;
+      }
+  } else {
+      if (lastBalanceBeforeMTD !== 0) {
+          saldoAwal = lastBalanceBeforeMTD; // Mengambil saldo akhir bulan N-1 dengan akurat
+      } else {
+          // Fallback jika tidak ada histori bulan N-1 di data Jago
+          saldoAwal = filteredData[0].balance - filteredData[0].rawAmount;
+      }
+  }
+  
   var units = {};
   var totalDebit = 0;
   var totalKredit = 0;
-  var totalPemasukan = 0;
-  var totalPengeluaran = 0;
   
+  // 3. Pemasukan dan Pengeluaran hanya menggunakan arus kas (rawAmount) dari bulan MTD
   for (var i = 0; i < filteredData.length; i++) {
     var amount = filteredData[i].rawAmount;
     var unit = filteredData[i].unit;
@@ -962,39 +1010,11 @@ function updateNeracaKeuangan() {
     if (amount > 0) {
       units[unit].debit += amount;
       totalKredit += amount;
-      totalPemasukan += amount;
     } else if (amount < 0) {
       var absAmount = Math.abs(amount);
       units[unit].kredit += absAmount;
       totalDebit += absAmount;
-      totalPengeluaran += absAmount;
     }
-  }
-
-  // 3. Tentukan Saldo Akhir riil, lalu hitung mundur Saldo Awal agar selalu cocok
-  var finalBalance = 0;
-  for (var k = 0; k < filteredData.length; k++) {
-      if (filteredData[k].balance && filteredData[k].balance !== 0) {
-          finalBalance = filteredData[k].balance;
-      } else if (finalBalance !== 0) {
-          // Terapkan penyesuaian dari baris manual yang tidak punya kolom balance
-          finalBalance += filteredData[k].rawAmount;
-      }
-  }
-  
-  var saldoAwal = 0;
-  if (finalBalance === 0) {
-      // Fallback jika tidak ada balance sama sekali
-      if (selectedFilter === "Semua Bulan") {
-          saldoAwal = filteredData.length > 0 ? (filteredData[0].balance - filteredData[0].rawAmount) : 0;
-          finalBalance = saldoAwal + totalPemasukan - totalPengeluaran;
-      } else {
-          saldoAwal = lastBalanceBeforeMTD !== 0 ? lastBalanceBeforeMTD : (filteredData.length > 0 ? (filteredData[0].balance - filteredData[0].rawAmount) : 0);
-          finalBalance = saldoAwal + totalPemasukan - totalPengeluaran;
-      }
-  } else {
-      // Hitung mundur saldo awal agar laporan keuangan selalu akurat dan balance
-      saldoAwal = finalBalance - totalPemasukan + totalPengeluaran;
   }
   
   neracaSheet.getRange("A:D").clear();
@@ -1004,12 +1024,14 @@ function updateNeracaKeuangan() {
   
   // --- BAGIAN PEMASUKAN ---
   neracaData.push(["PEMASUKAN", "", ""]);
-  neracaData.push(["Saldo Awal", saldoAwal > 0 ? saldoAwal : 0, saldoAwal < 0 ? Math.abs(saldoAwal) : ""]);
+  neracaData.push(["Saldo Awal", saldoAwal, ""]);
   
+  var totalPemasukan = 0;
   for (var u in units) {
     if (units[u].debit > 0) {
       var prefix = (u === 'Tanpa Unit') ? "" : "Pemasukan / BODP ";
       neracaData.push([prefix + u, units[u].debit, ""]);
+      totalPemasukan += units[u].debit;
     }
   }
   
@@ -1018,10 +1040,12 @@ function updateNeracaKeuangan() {
   
   // --- BAGIAN PENGELUARAN ---
   neracaData.push(["PENGELUARAN", "", ""]);
+  var totalPengeluaran = 0;
   for (var u in units) {
     if (units[u].kredit > 0) {
       var prefix = (u === 'Tanpa Unit') ? "" : "Operasional / BODP ";
       neracaData.push([prefix + u, "", units[u].kredit]);
+      totalPengeluaran += units[u].kredit;
     }
   }
   
@@ -1029,7 +1053,7 @@ function updateNeracaKeuangan() {
   neracaData.push(["", "", ""]);
   
   // --- SALDO AKHIR ---
-  saldoAkhir = finalBalance;
+  saldoAkhir = saldoAwal + totalPemasukan - totalPengeluaran;
   neracaData.push(["SALDO AKHIR", saldoAkhir, ""]);
   
   neracaSheet.getRange(1, 1, neracaData.length, 3).setValues(neracaData);
@@ -1048,29 +1072,4 @@ function updateNeracaKeuangan() {
   
   neracaSheet.getRange(2, 2, neracaData.length - 1, 2).setNumberFormat('"Rp" #,##0');
   neracaSheet.autoResizeColumns(1, 3);
-}
-
-
-function parseAmountSafe(val) {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    var str = val.toString().trim();
-    if (str === '-' || str === '') return 0;
-    str = str.replace(/rp/gi, '').replace(/\s/g, '');
-    var isNegative = false;
-    if (str.startsWith('-') || str.startsWith('(')) {
-       isNegative = true;
-       str = str.replace(/[-\(\)]/g, '');
-    }
-    var lastComma = str.lastIndexOf(',');
-    var lastDot = str.lastIndexOf('.');
-    if (lastComma > lastDot) {
-        str = str.replace(/\./g, '').replace(/,/g, '.');
-    } else if (lastDot > lastComma) {
-        str = str.replace(/,/g, '');
-    } else {
-        str = str.replace(/[.,]/g, '');
-    }
-    var amount = parseFloat(str) || 0;
-    return isNegative ? -amount : amount;
 }

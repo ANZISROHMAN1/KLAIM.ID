@@ -989,19 +989,19 @@
             try {
                 const filterSelect = document.getElementById('global-month-filter');
                 let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
-                const monthParam = filterSelect && filterSelect.value ? `&month=${encodeURIComponent(filterSelect.value)}` : '';
+                const monthParam = ''; // Tidak perlu filter bulan karena planning bersifat global
 
                 document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>';
 
                 let textFound = '';
-                if (reportPlanningCache[monthVal] !== undefined) {
-                    textFound = reportPlanningCache[monthVal];
+                if (reportPlanningCache['GLOBAL'] !== undefined) {
+                    textFound = reportPlanningCache['GLOBAL'];
                 } else {
-                    const response = await fetch(SCRIPT_URL + '?action=get_planning' + monthParam + '&t=' + new Date().getTime());
+                    const response = await fetch(SCRIPT_URL + '?action=get_planning&t=' + new Date().getTime());
                     const result = await response.json();
                     if (result.success) {
                         textFound = result.data || '';
-                        reportPlanningCache[monthVal] = textFound;
+                        reportPlanningCache['GLOBAL'] = textFound;
                     }
                 }
 
@@ -1109,7 +1109,7 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    reportPlanningCache[monthVal] = textData;
+                    reportPlanningCache['GLOBAL'] = textData;
                     renderPlanningContent(textData, window.currentAiSaldo);
 
                     document.getElementById('planning-modal').style.display = 'none';
