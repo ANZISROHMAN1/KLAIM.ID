@@ -328,6 +328,7 @@
                                             <th style="color: var(--danger-color);">Total Nominal (Rp)</th>
                                             <th>Estimasi Budget (Rp)</th>
                                             <th>Total Prognosa Bulan Ini (Rp)</th>
+                                            <th>Total Sisa saldo bulan ini</th>
                                         </tr>
                                     </thead>
                                     <tbody id="report-summary-body">
@@ -1738,6 +1739,7 @@ function parseDateSafeClient(val) {
                         <td style="font-weight: 600; color: var(--danger-color); background: var(--danger-light);">${formatRupiah(item.total)}</td>
                         <td style="font-weight: 600; color: #f59e0b; ${estimasiUnit > 0 ? 'cursor: pointer; text-decoration: underline;' : ''}" ${estimasiUnit > 0 ? `onclick="showPlanningDetailsModal('${item.unit}'); event.stopPropagation();"` : ''}>${estimasiUnit > 0 ? formatRupiah(estimasiUnit) : '-'}</td>
                         <td style="color: var(--text-muted); font-weight: 500; text-align: center;">-</td>
+                        <td style="color: var(--text-muted); font-weight: 500; text-align: center;">-</td>
                     </tr>
                 `;
             });
@@ -1752,12 +1754,13 @@ function parseDateSafeClient(val) {
                     <td style="font-weight: 700; color: var(--danger-color); font-size: 1.1rem; background: var(--danger-light);">${formatRupiah(totalAmount)}</td>
                     <td style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">${totalEstimasi > 0 ? formatRupiah(totalEstimasi) : '-'}</td>
                     <td style="font-weight: 700; color: ${prognosaGlobal >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-size: 1.1rem;">${prognosaHtml}</td>
+                    <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem;">${window.currentAiSaldo !== undefined ? formatRupiah(window.currentAiSaldo) : '-'}</td>
                 </tr>
             `;
 
             const tbody = document.getElementById('report-summary-body');
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 tbody.innerHTML = html;
             }
