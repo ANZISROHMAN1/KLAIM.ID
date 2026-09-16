@@ -1,0 +1,1144 @@
+--- admin.html	2026-09-16 16:06:21
++++ admin_good.html	2026-09-16 17:21:58
+@@ -571,7 +571,7 @@
+             }
+         }
+ 
+-        let currentData = [];
++        const reportJagoCache = {}; const reportNeracaCache = {}; let currentData = [];
+         let pendingUpdateRowId = null;
+         let pendingUpdateStatus = null;
+         let currentStatusFilter = 'all';
+\ No newline at end of file
+@@ -653,484 +653,9 @@
+                 </div>
+             `;
+             setTimeout(() => { container.innerHTML = ''; }, 5000);
+-        }
+-
+-        async function fetchData(isSilent = false) {
+-            if (SCRIPT_URL === 'GANTI_DENGAN_URL_WEB_APP_ANDA') {
+-                if (!isSilent) showAlert('Silakan set SCRIPT_URL terlebih dahulu', 'error');
+-                return;
+-            }
+-
+-            if (!isSilent) {
+-                document.getElementById('table-body').innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #d1d5db;"></i>Memuat data pengajuan...</td></tr>`;
+-            }
+-
+-            try {
+-                const response = await fetch(SCRIPT_URL + '?action=list&t=' + new Date().getTime());
+-                const result = await response.json();
+-
+-                if (result.success) {
+-                    const newTotal = result.data.length;
+-
+-                    // Cek jika ada data baru masuk
+-                    if (!isFirstLoad && newTotal > lastTotalCount) {
+-                        const newItemsCount = newTotal - lastTotalCount;
+-                        showAlert(`🔔 Ada ${newItemsCount} pengajuan klaim baru!`, 'success');
+-                        playNotificationSound();
+-
+-                        unreadNotifCount += newItemsCount;
+-                        const badge = document.getElementById('notif-badge');
+-                        badge.innerText = unreadNotifCount;
+-                        badge.style.display = 'flex';
+-                    }
+-
+-                    lastTotalCount = newTotal;
+-                    isFirstLoad = false;
+-
+-                    currentData = result.data;
+-                    applyFilters();
+-                    updateStats(currentData);
+-                } else {
+-                    if (!isSilent) showAlert('Gagal memuat data.', 'error');
+-                }
+-            } catch (error) {
+-                if (!isSilent) showAlert('Terjadi kesalahan jaringan.', 'error');
+-            }
+-        }
+-
+-        function updateStats(data) {
+-            document.getElementById('stat-total').innerText = data.length;
+-            document.getElementById('stat-pending').innerText = data.filter(d => d.Status === 'Pending').length;
+-            document.getElementById('stat-approved').innerText = data.filter(d => d.Status === 'Approved').length;
+-        }
+-
+-        function filterTable(status) {
+-            currentStatusFilter = status;
+-            applyFilters();
+-        }
+-
+-        function showStatusModal(status) {
+-            let filtered = currentData;
+-            let title = 'Semua Pengajuan';
+-
+-            if (status !== 'all') {
+-                filtered = filtered.filter(d => d.Status === status);
+-                if (status === 'Pending') title = 'Menunggu Konfirmasi';
+-                if (status === 'Approved') title = 'Telah Dibayar';
+-                if (status === 'Rejected') title = 'Ditolak';
+-            }
+-
+-            document.getElementById('modal-status-title').innerText = title + ' (' + filtered.length + ' data)';
+-
+-            const tbody = document.getElementById('status-details-body');
+-            if (filtered.length === 0) {
+-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+-            } else {
+-                let html = '';
+-                filtered.forEach(item => {
+-                    let dateStr = item.Tanggal;
+-                    if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
+-
+-                    let buktiHtml = '';
+-                    if (item.Bukti_Path) buktiHtml += `<a href="${item.Bukti_Path}" target="_blank" class="nota-link"><i class="ri-attachment-line"></i> Nota</a>`;
+-                    if (item.Bukti_TF_Path) buktiHtml += `<br><a href="${item.Bukti_TF_Path}" target="_blank" class="nota-link" style="color: var(--success-color);"><i class="ri-check-double-line"></i> Bukti TF</a>`;
+-
+-                    html += `
+-                    <tr>
+-                        <td>#${item.ID}</td>
+-                        <td>${dateStr}</td>
+-                        <td style="font-weight: 500;">${item.Nama}</td>
+-                        <td style="font-weight: 500;">${item.Unit || '-'} <br><span style="color: var(--text-muted); font-size: 0.85rem; font-weight: normal;">${item.Sub_Unit || item['Sub Unit'] || '-'}</span></td>
+-                        <td>${item.Kegiatan}</td>
+-                        <td style="font-weight: 600;">${formatRupiah(item.Nominal)}</td>
+-                        <td>
+-                            <div style="font-weight: 500;">${item.Bank}</div>
+-                            <div style="font-size: 0.85rem; color: var(--text-muted);">${item.Rekening}</div>
+-                        </td>
+-                        <td>${buktiHtml}</td>
+-                        <td><span class="status-badge status-${item.Status.toLowerCase()}">${item.Status}</span></td>
+-                    </tr>
+-                    `;
+-                });
+-                tbody.innerHTML = html;
+-            }
+-
+-            document.getElementById('status-details-modal').style.display = 'flex';
+-        }
+-
+-        function resetFilters() {
+-            document.getElementById('filter-start').value = '';
+-            document.getElementById('filter-end').value = '';
+-            if (document.getElementById('filter-unit')) document.getElementById('filter-unit').value = 'all';
+-            if (document.getElementById('filter-sub-unit')) document.getElementById('filter-sub-unit').value = '';
+-            if (document.getElementById('filter-limit')) document.getElementById('filter-limit').value = '10';
+-            currentStatusFilter = 'all';
+-            fetchReportData();
+-        }
+-
+-        function applyFilters() {
+-            let filtered = currentData;
+-
+-            // 1. Filter by Status
+-            if (currentStatusFilter !== 'all') {
+-                filtered = filtered.filter(d => d.Status === currentStatusFilter);
+-            }
+-
+-            // 2. Filter by Unit
+-            const unitFilter = document.getElementById('filter-unit') ? document.getElementById('filter-unit').value : 'all';
+-            if (unitFilter !== 'all') {
+-                filtered = filtered.filter(d => d.Unit === unitFilter);
+-            }
+-
+-            // 2.1 Filter by Sub Unit
+-            const subUnitFilter = document.getElementById('filter-sub-unit') ? document.getElementById('filter-sub-unit').value.toLowerCase() : '';
+-            if (subUnitFilter) {
+-                filtered = filtered.filter(d => {
+-                    const subUnit = d.Sub_Unit || d['Sub Unit'] || '';
+-                    return subUnit.toLowerCase().includes(subUnitFilter);
+-                });
+-            }
+-
+-            // 3. Filter by Date Range
+-            const startDate = document.getElementById('filter-start').value;
+-            const endDate = document.getElementById('filter-end').value;
+-
+-            if (startDate || endDate) {
+-                filtered = filtered.filter(item => {
+-                    let dateStr = item.Tanggal;
+-                    if (typeof dateStr === 'string') dateStr = dateStr.split('T')[0];
+-
+-                    // Convert to pure YYYY-MM-DD for accurate comparison
+-                    try {
+-                        const itemDate = new Date(dateStr).toISOString().split('T')[0];
+-                        if (startDate && itemDate < startDate) return false;
+-                        if (endDate && itemDate > endDate) return false;
+-                        return true;
+-                    } catch (e) {
+-                        return true; // if date is unparseable, include it
+-                    }
+-                });
+-            }
+-
+-            // 4. Limit Results (Top 10 by default)
+-            const limitVal = document.getElementById('filter-limit') ? document.getElementById('filter-limit').value : '10';
+-            if (limitVal !== 'all') {
+-                filtered = filtered.slice(0, parseInt(limitVal, 10));
+-            }
+-
+-            renderTable(filtered);
+-            // updateFinancialReport is no longer called here, as it will be populated by Jago data
+         }
+ 
+-        function updateFinancialReport(data) {
+-            // Group data by Unit
+-            const unitSummary = {};
+-            let totalAmount = 0;
+-
+-            data.forEach(item => {
+-                // Ignore empty or invalid nominals
+-                if (item.Status === 'Rejected') return; // optionally exclude rejected claims from financial report
+-
+-                let unit = item.Unit || 'Lainnya';
+-                const subUnit = item.Sub_Unit || item['Sub Unit'];
+-                if (subUnit && subUnit.trim() !== '') {
+-                    unit += ' - ' + subUnit;
+-                }
+-                const nominal = Number(item.Nominal) || 0;
+-
+-                if (!unitSummary[unit]) {
+-                    unitSummary[unit] = { count: 0, total: 0 };
+-                }
+-
+-                unitSummary[unit].count += 1;
+-                unitSummary[unit].total += nominal;
+-                totalAmount += nominal;
+-            });
+-
+-            // Prepare data for Chart and Table
+-            const labels = Object.keys(unitSummary);
+-            const amounts = labels.map(label => unitSummary[label].total);
+-            const counts = labels.map(label => unitSummary[label].count);
+-
+-            // Update Table
+-            const tbody = document.getElementById('report-summary-body');
+-            if (labels.length === 0) {
+-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+-            } else {
+-                let html = '';
+-                labels.forEach(label => {
+-                    let parts = label.split(' - ');
+-                    let u = parts[0];
+-                    let su = parts.length > 1 ? parts.slice(1).join(' - ') : '-';
+-                    html += `
+-                        <tr>
+-                            <td style="font-weight: 500;">${u}</td>
+-                            <td style="color: var(--text-muted);">${su}</td>
+-                            <td style="font-weight: 600; color: var(--success-color); background: var(--success-light);">${unitSummary[label].count} Pengajuan</td>
+-                            <td style="font-weight: 600; color: var(--success-color); background: var(--success-light);">${formatRupiah(unitSummary[label].total)}</td>
+-                        </tr>
+-                    `;
+-                });
+-                // Add Total row
+-                const totalCount = counts.reduce((a, b) => a + b, 0);
+-                html += `
+-                    <tr style="background: var(--bg-main);">
+-                        <td colspan="2" style="font-weight: 700;">TOTAL KESELURUHAN</td>
+-                        <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem; background: var(--success-light);">${totalCount} Pengajuan</td>
+-                        <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem; background: var(--success-light);">${formatRupiah(totalAmount)}</td>
+-                    </tr>
+-                `;
+-                tbody.innerHTML = html;
+-            }
+-
+-            // Update Chart
+-            const ctx = document.getElementById('unitPieChart');
+-            if (!ctx) return;
+-
+-            if (unitChart) {
+-                unitChart.destroy();
+-            }
+-
+-            if (labels.length > 0) {
+-                const bgColors = [
+-                    '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899',
+-                    '#ef4444', '#14b8a6', '#f43f5e', '#84cc16', '#0ea5e9',
+-                    '#6366f1', '#f97316', '#d946ef', '#eab308', '#06b6d4',
+-                    '#8b5cf6', '#10b981', '#f43f5e', '#3b82f6', '#f59e0b'
+-                ];
+-
+-                unitChart = new Chart(ctx, {
+-                    type: 'doughnut',
+-                    data: {
+-                        labels: labels,
+-                        datasets: [{
+-                            data: amounts,
+-                            backgroundColor: bgColors.slice(0, labels.length),
+-                            borderWidth: 0,
+-                            hoverOffset: 4
+-                        }]
+-                    },
+-                    options: {
+-                        responsive: true,
+-                        maintainAspectRatio: false,
+-                        plugins: {
+-                            legend: {
+-                                position: 'right',
+-                                labels: {
+-                                    color: document.documentElement.getAttribute('data-theme') === 'light' ? '#1f2937' : '#f9fafb',
+-                                    padding: 20
+-                                }
+-                            },
+-                            tooltip: {
+-                                callbacks: {
+-                                    label: function (context) {
+-                                        let label = context.label || '';
+-                                        if (label) label += ': ';
+-                                        if (context.parsed !== null) {
+-                                            label += formatRupiah(context.parsed);
+-                                        }
+-                                        return label;
+-                                    }
+-                                }
+-                            }
+-                        }
+-                    }
+-                });
+-            }
+-        }
+-        
+-        async function fetchReportData(isSilent = false) {
+-            if (SCRIPT_URL === 'GANTI_DENGAN_URL_WEB_APP_ANDA') {
+-                if (!isSilent) showAlert('Silakan set SCRIPT_URL terlebih dahulu', 'error');
+-                return;
+-            }
+-
+-            try {
+-                const filterSelect = document.getElementById('global-month-filter');
+-                let monthParam = '';
+-                if (filterSelect && filterSelect.value) {
+-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+-                }
+-                
+-                // Show loader if needed
+-                if (!isSilent) {
+-                    const tbody = document.getElementById('report-summary-body');
+-                    if (tbody) {
+-                        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #d1d5db;"></i>Memuat data dashboard...</td></tr>`;
+-                    }
+-                    const tableBody = document.getElementById('table-body');
+-                    if (tableBody) {
+-                        tableBody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="ri-loader-4-line ri-spin" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #d1d5db;"></i>Memuat data pengajuan...</td></tr>`;
+-                    }
+-                }
+-
+-                const response = await fetch(`${SCRIPT_URL}?action=dashboard_data${monthParam}&t=${new Date().getTime()}`);
+-                const result = await response.json();
+-                
+-                // Process Form User Data
+-                if (result.list_data && result.list_data.success) {
+-                    const newTotal = result.list_data.data.length;
+-
+-                    // Cek jika ada data baru masuk
+-                    if (!isFirstLoad && newTotal > lastTotalCount) {
+-                        const newItemsCount = newTotal - lastTotalCount;
+-                        showAlert(`🔔 Ada ${newItemsCount} pengajuan klaim baru!`, 'success');
+-                        playNotificationSound();
+-
+-                        unreadNotifCount += newItemsCount;
+-                        const badge = document.getElementById('notif-badge');
+-                        badge.innerText = unreadNotifCount;
+-                        badge.style.display = 'flex';
+-                    }
+-
+-                    lastTotalCount = newTotal;
+-                    isFirstLoad = false;
+-
+-                    currentData = result.list_data.data || [];
+-                    applyFilters(); // This replaces filterTable since applyFilters calls it and filters properly
+-                    updateStats(currentData);
+-                    
+-                    // Call the financial update if function exists
+-                    if (typeof updateFinancialReport === 'function') {
+-                        updateFinancialReport(currentData);
+-                    }
+-                } else if (!result.list_data) {
+-                    if (!isSilent) showAlert('Gagal memuat data utama.', 'error');
+-                }
+-
+-                // Process Neraca Data
+-                if (result.neraca_data && result.neraca_data.success) {
+-                    reportNeracaCache[monthParam] = result.neraca_data;
+-                    let nResult = result.neraca_data;
+-                    let saldoAkhir = 0;
+-                    let saldoAwal = 0;
+-                    let totalPemasukan = 0;
+-                    for (let i = 0; i < nResult.data.length; i++) {
+-                        let rowLabel = nResult.data[i][0] ? nResult.data[i][0].toString().toUpperCase() : "";
+-                        if (rowLabel === "SALDO AKHIR") {
+-                            saldoAkhir = parseFloat(nResult.data[i][1]) || 0;
+-                        } else if (rowLabel === "SALDO AWAL") {
+-                            saldoAwal = parseFloat(nResult.data[i][1]) || 0;
+-                        } else if (rowLabel === "TOTAL PEMASUKAN") {
+-                            totalPemasukan = parseFloat(nResult.data[i][1]) || 0;
+-                        }
+-                    }
+-                    window.currentAiSaldo = saldoAkhir;
+-                    window.currentGlobalSaldo = saldoAwal + totalPemasukan;
+-                    
+-                    let sisaSaldoCard = document.getElementById('top-card-sisa-saldo');
+-                    if (sisaSaldoCard) {
+-                        sisaSaldoCard.innerText = formatRupiah(saldoAkhir);
+-                    }
+-                    
+-                    if (nResult.months && nResult.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
+-                        const currentVal = filterSelect.value || nResult.currentMonth;
+-                        filterSelect.innerHTML = '';
+-                        nResult.months.forEach(m => {
+-                            const option = document.createElement('option');
+-                            option.value = m === 'Semua Bulan' ? '' : m;
+-                            option.textContent = m;
+-                            if (currentVal === option.value || currentVal === m) option.selected = true;
+-                            filterSelect.appendChild(option);
+-                        });
+-                    }
+-                    renderNeracaTable(nResult.data);
+-                }
+-                
+-                // Process Planning Data
+-                if (result.planning_data && result.planning_data.success) {
+-                    reportPlanningCache['GLOBAL'] = result.planning_data.data;
+-                    renderPlanningContent(result.planning_data.data, window.currentAiSaldo);
+-                }
+-
+-                // Process Insights Data
+-                if (result.debug_jago && result.debug_jago.success) {
+-                    window.rawJagoData = result.debug_jago.data;
+-                    generateInsightsFromJago(window.rawJagoData);
+-                    renderTrendChart(window.rawJagoData);
+-                }
+-
+-                // Process Jago Data
+-                if (result.jago_data && result.jago_data.success) {
+-                    reportJagoCache[monthParam] = result.jago_data;
+-                    window.aggregatedJagoData = result.jago_data.data;
+-                    renderJagoPieChartAndTable(window.aggregatedJagoData);
+-                }
+-                
+-            } catch (error) {
+-                console.error("Error fetching dashboard data:", error);
+-                if (!isSilent) showAlert('Terjadi kesalahan jaringan.', 'error');
+-            }
+-        }
+-
+-        function renderPlanningContent(textData, saldo) {
+-            let container = document.getElementById('planning-content');
+-            let data = [];
+-            try {
+-                if (textData) data = JSON.parse(textData);
+-            } catch (e) {
+-                container.innerText = textData;
+-                return;
+-            }
+-
+-            if (!data || data.length === 0) {
+-                container.innerHTML = '<span style="color: var(--text-muted); font-style: italic;">Belum ada rencana estimasi tersimpan. Klik di sini untuk mulai mencatat.</span>';
+-                return;
+-            }
+-
+-            let totalEstimasi = 0;
+-            let html = `<table class="modern-table" style="margin-top: 0.5rem; font-size: 0.9rem;">
+-                <thead><tr>
+-                    <th style="padding: 0.5rem; background: var(--bg-main);">Keterangan Rencana</th>
+-                    <th style="padding: 0.5rem; background: var(--bg-main);">Unit</th>
+-                    <th style="padding: 0.5rem; background: var(--bg-main);">Detail</th>
+-                    <th style="padding: 0.5rem; text-align: right; background: var(--bg-main);">Estimasi Budget</th>
+-                </tr></thead><tbody>`;
+-
+-            data.forEach(item => {
+-                let amount = parseFloat(item.amount) || 0;
+-                totalEstimasi += amount;
+-                html += `<tr>
+-                    <td style="padding: 0.5rem;">${item.desc || '-'}</td>
+-                    <td style="padding: 0.5rem;">${item.unit || '-'}</td>
+-                    <td style="padding: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">${item.ket || '-'}</td>
+-                    <td style="padding: 0.5rem; text-align: right; font-weight: 500;">${formatRupiah(amount)}</td>
+-                </tr>`;
+-            });
+-
+-            html += `</tbody></table>`;
+-
+-            let sisaProyeksi = (saldo || 0) - totalEstimasi;
+-            let proyeksiColor = sisaProyeksi >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+-
+-            html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem; background: var(--bg-main); border-radius: 6px; font-size: 0.9rem;">
+-                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+-                    <span style="color: var(--text-muted);">Sisa Saldo Saat Ini</span>
+-                    <strong style="color: var(--text-main);">${formatRupiah(saldo || 0)}</strong>
+-                </div>
+-                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: center;">
+-                    <span style="color: var(--text-muted);">Total Estimasi</span>
+-                    <strong style="color: var(--danger-color);">${formatRupiah(totalEstimasi)}</strong>
+-                </div>
+-                <div style="display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-end;">
+-                    <span style="color: var(--text-muted);">Proyeksi Akhir</span>
+-                    <strong style="color: ${proyeksiColor}; font-size: 1.05rem;">${formatRupiah(sisaProyeksi)}</strong>
+-                </div>
+-            </div>`;
+-
+-            container.innerHTML = html;
+-        }
+-
+-        async function fetchPlanningData() {
+-            try {
+-                const filterSelect = document.getElementById('global-month-filter');
+-                let monthVal = filterSelect && filterSelect.value ? filterSelect.value : 'Semua Bulan';
+-                const monthParam = ''; // Tidak perlu filter bulan karena planning bersifat global
+-
+-                document.getElementById('planning-content').innerHTML = '<span style="color: var(--text-muted);"><i class="ri-loader-4-line ri-spin"></i> Memuat planning...</span>';
+-
+-                let textFound = '';
+-                if (reportPlanningCache['GLOBAL'] !== undefined) {
++        undefined) {
+                     textFound = reportPlanningCache['GLOBAL'];
+                 } else {
+                     const response = await fetch(SCRIPT_URL + '?action=get_planning&t=' + new Date().getTime());
+\ No newline at end of file
+@@ -1320,545 +845,9 @@
+             var d3 = new Date(dStr.replace(' ', 'T'));
+             if (!isNaN(d3.getTime())) return d3;
+             return null;
+-        }
+-
+-        async function fetchInsights() {
+-            try {
+-                if (window.rawJagoData) {
+-                    generateInsightsFromJago(window.rawJagoData);
+-                    renderTrendChart(window.rawJagoData);
+-                    return;
+-                }
+-
+-                // Fetch ALL raw jago data to compute insights over time without current month filter
+-                const response = await fetch(SCRIPT_URL + '?action=debug_jago');
+-                const result = await response.json();
+-
+-                if (result.success && result.data) {
+-                    window.rawJagoData = result.data; // Cache for the pop-up modal
+-                    generateInsightsFromJago(result.data);
+-                    renderTrendChart(result.data);
+-                } else {
+-                    document.getElementById('ai-insights-container').innerHTML = `<div style="color: var(--danger-color); padding: 0.5rem; background: var(--bg-main); border-radius: 8px;">Gagal memuat insights.</div>`;
+-                }
+-            } catch (error) {
+-                console.error('Network error fetching Insights:', error);
+-                document.getElementById('ai-insights-container').innerHTML = `<div style="color: var(--danger-color); padding: 0.5rem; background: var(--bg-main); border-radius: 8px;">Terjadi kesalahan jaringan saat memuat insights.</div>`;
+-            }
+-        }
+-
+-        function renderTrendChart(data) {
+-            const filterSelect = document.getElementById('global-month-filter');
+-            const selectedMonth = filterSelect ? filterSelect.value : '';
+-
+-            const headerRow = data[0];
+-            const isSplitCols = (headerRow.length >= 8) ||
+-                (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
+-                (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
+-
+-            const CUTOFF_DATE = new Date(2026, 6, 30); // 30 Juli 2026
+-            const dailyData = {};
+-
+-            for (let i = 1; i < data.length; i++) {
+-                let rowDate = parseDateSafeClient(data[i][0]);
+-                if (!rowDate || rowDate < CUTOFF_DATE) continue;
+-
+-                let monthYear = '';
+-                try {
+-                    const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+-                    monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
+-                } catch (e) { }
+-
+-                if (selectedMonth && selectedMonth !== 'Semua Bulan' && monthYear !== selectedMonth) {
+-                    continue; // Skip if it doesn't match selected month
+-                }
+-
+-                const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+-                let dateLabel = ('0' + rowDate.getDate()).slice(-2) + ' ' + shortMonths[rowDate.getMonth()];
+-                let sortKey = rowDate.getFullYear() + '-' + ('0' + (rowDate.getMonth() + 1)).slice(-2) + '-' + ('0' + rowDate.getDate()).slice(-2);
+-
+-                if (!dailyData[sortKey]) {
+-                    dailyData[sortKey] = { label: dateLabel, pemasukan: 0, pengeluaran: 0 };
+-                }
+-
+-                let masuk = 0;
+-                let keluar = 0;
+-
+-                if (isSplitCols) {
+-                    masuk = parseAmountSafeClient(data[i][4]);
+-                    keluar = parseAmountSafeClient(data[i][5]);
+-                } else {
+-                    let amount = parseAmountSafeClient(data[i][4]);
+-                    if (amount > 0) masuk = amount;
+-                    else if (amount < 0) keluar = Math.abs(amount);
+-                }
+-
+-                dailyData[sortKey].pemasukan += masuk;
+-                dailyData[sortKey].pengeluaran += keluar;
+-            }
+-
+-            const sortedKeys = Object.keys(dailyData).sort();
+-            const labels = [];
+-            const dataPemasukan = [];
+-            const dataPengeluaran = [];
+-
+-            for (let key of sortedKeys) {
+-                labels.push(dailyData[key].label);
+-                dataPemasukan.push(dailyData[key].pemasukan);
+-                dataPengeluaran.push(dailyData[key].pengeluaran);
+-            }
+-
+-            const ctx = document.getElementById('trendChart');
+-            if (!ctx) return;
+-
+-            if (trendChartInstance) {
+-                trendChartInstance.destroy();
+-            }
+-
+-            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+-
+-            trendChartInstance = new Chart(ctx, {
+-                type: 'line',
+-                data: {
+-                    labels: labels,
+-                    datasets: [
+-                        {
+-                            label: 'Pemasukan',
+-                            data: dataPemasukan,
+-                            borderColor: '#10b981',
+-                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+-                            borderWidth: 2,
+-                            fill: true,
+-                            tension: 0.4,
+-                            pointRadius: 4,
+-                            pointBackgroundColor: '#10b981',
+-                            pointBorderColor: isLight ? '#ffffff' : '#1f2937',
+-                            pointBorderWidth: 2
+-                        },
+-                        {
+-                            label: 'Pengeluaran',
+-                            data: dataPengeluaran,
+-                            borderColor: '#ef4444',
+-                            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+-                            borderWidth: 2,
+-                            fill: true,
+-                            tension: 0.4,
+-                            pointRadius: 4,
+-                            pointBackgroundColor: '#ef4444',
+-                            pointBorderColor: isLight ? '#ffffff' : '#1f2937',
+-                            pointBorderWidth: 2
+-                        }
+-                    ]
+-                },
+-                options: {
+-                    responsive: true,
+-                    maintainAspectRatio: false,
+-                    interaction: {
+-                        mode: 'index',
+-                        intersect: false,
+-                    },
+-                    plugins: {
+-                        legend: {
+-                            position: 'top',
+-                            labels: {
+-                                usePointStyle: true,
+-                                boxWidth: 8,
+-                                color: isLight ? '#4b5563' : '#d1d5db'
+-                            }
+-                        },
+-                        tooltip: {
+-                            backgroundColor: isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(31, 41, 55, 0.9)',
+-                            titleColor: isLight ? '#1f2937' : '#ffffff',
+-                            bodyColor: isLight ? '#4b5563' : '#d1d5db',
+-                            borderColor: isLight ? '#e5e7eb' : '#374151',
+-                            borderWidth: 1,
+-                            callbacks: {
+-                                label: function (context) {
+-                                    let label = context.dataset.label || '';
+-                                    if (label) label += ': ';
+-                                    if (context.parsed.y !== null) {
+-                                        label += 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+-                                    }
+-                                    return label;
+-                                }
+-                            }
+-                        }
+-                    },
+-                    scales: {
+-                        y: {
+-                            beginAtZero: true,
+-                            grid: {
+-                                color: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+-                            },
+-                            ticks: {
+-                                color: isLight ? '#6b7280' : '#9ca3af',
+-                                callback: function (value) {
+-                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + ' Juta';
+-                                    if (value >= 1000) return 'Rp ' + (value / 1000) + ' Ribu';
+-                                    return 'Rp ' + value;
+-                                }
+-                            }
+-                        },
+-                        x: {
+-                            grid: {
+-                                color: isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'
+-                            },
+-                            ticks: {
+-                                color: isLight ? '#6b7280' : '#9ca3af'
+-                            }
+-                        }
+-                    }
+-                }
+-            });
+-        }
+-
+-        function generateInsightsFromJago(data) {
+-            if (data.length < 2) {
+-                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada data cukup untuk dianalisis.</div>`;
+-                return;
+-            }
+-
+-            const filterSelect = document.getElementById('global-month-filter');
+-            const selectedMonthStr = filterSelect ? filterSelect.value : 'Semua Bulan';
+-
+-            const headerRow = data[0];
+-            const isSplitCols = (headerRow.length >= 8) ||
+-                (headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
+-                (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
+-
+-            const CUTOFF_DATE = new Date(2026, 6, 30);
+-
+-            const parsedData = [];
+-            for (let i = 1; i < data.length; i++) {
+-                let rowDate = parseDateSafeClient(data[i][0]);
+-                if (!rowDate || rowDate < CUTOFF_DATE) continue;
+-
+-                let monthYear = '';
+-                try {
+-                    const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+-                    monthYear = monthsId[rowDate.getMonth()] + ' ' + rowDate.getFullYear();
+-                } catch (e) { }
+-
+-                let masuk = 0;
+-                let keluar = 0;
+-                let unit = 'Lainnya';
+-                let categoryRaw = '';
+-
+-                if (isSplitCols) {
+-                    masuk = parseAmountSafeClient(data[i][4]);
+-                    keluar = parseAmountSafeClient(data[i][5]);
+-                    unit = data[i][7] || 'Tanpa Unit';
+-                    categoryRaw = (data[i][2] || '').toString().toLowerCase();
+-                } else {
+-                    let amount = parseAmountSafeClient(data[i][4]);
+-                    if (amount > 0) masuk = amount;
+-                    else if (amount < 0) keluar = Math.abs(amount);
+-                    unit = data[i][6] || 'Tanpa Unit';
+-                    categoryRaw = (data[i][2] || '').toString().toLowerCase();
+-                }
+-
+-                let category = 'Lainnya';
+-                if (categoryRaw.includes('top up')) category = 'Top Up';
+-                else if (categoryRaw.includes('transfer')) category = 'Transfer';
+-                else if (categoryRaw.includes('qris')) category = 'QRIS';
+-                else if (categoryRaw.includes('biaya') || categoryRaw.includes('admin') || categoryRaw.includes('fee')) category = 'Biaya Admin';
+-                else if (categoryRaw.includes('tarik tunai')) category = 'Tarik Tunai';
+-
+-                let balance = 0;
+-                if (isSplitCols) {
+-                    balance = parseAmountSafeClient(data[i][6]);
+-                } else {
+-                    balance = parseAmountSafeClient(data[i][5]);
+-                }
+-
+-                parsedData.push({ date: rowDate, monthYear: monthYear, masuk: masuk, keluar: keluar, unit: unit, category: category, balance: balance });
+-            }
+-
+-            if (parsedData.length === 0) {
+-                document.getElementById('ai-insights-container').innerHTML = `<div style="padding: 1.5rem; background: var(--bg-main); border-radius: 8px; color: var(--text-muted); text-align: center;">Belum ada transaksi valid untuk dianalisa.</div>`;
+-                return;
+-            }
+-
+-            parsedData.sort((a, b) => b.date - a.date);
+-
+-            let targetMonthYear = selectedMonthStr;
+-            let isAllMonths = false;
+-
+-            if (!targetMonthYear || targetMonthYear === 'Semua Bulan' || targetMonthYear === '') {
+-                isAllMonths = true;
+-                targetMonthYear = 'Keseluruhan Waktu';
+-            }
+-
+-            let currentMonthData = isAllMonths ? parsedData : parsedData.filter(d => d.monthYear === targetMonthYear);
+-            if (currentMonthData.length === 0) currentMonthData = parsedData; // Fallback
+-
+-            let totalMasuk = 0;
+-            let totalKeluar = 0;
+-            let unitMap = {};
+-            let categoryMap = {};
+-            let monthlyExpenseMap = {};
+-
+-            currentMonthData.forEach(d => {
+-                totalMasuk += d.masuk;
+-                totalKeluar += d.keluar;
+-                if (d.keluar > 0) {
+-                    if (!unitMap[d.unit]) unitMap[d.unit] = 0;
+-                    unitMap[d.unit] += d.keluar;
+-                    if (!categoryMap[d.category]) categoryMap[d.category] = 0;
+-                    categoryMap[d.category] += d.keluar;
+-
+-                    if (isAllMonths) {
+-                        if (!monthlyExpenseMap[d.monthYear]) monthlyExpenseMap[d.monthYear] = 0;
+-                        monthlyExpenseMap[d.monthYear] += d.keluar;
+-                    }
+-                }
+-            });
+-
+-            let saldo = totalMasuk - totalKeluar;
+-            // DO NOT overwrite window.currentAiSaldo here!
+-
+-            let biggestUnit = 'Tanpa Unit';
+-            let biggestUnitTotal = 0;
+-            for (let u in unitMap) {
+-                if (unitMap[u] > biggestUnitTotal) {
+-                    biggestUnitTotal = unitMap[u];
+-                    biggestUnit = u;
+-                }
+-            }
+-
+-            let biggestCategory = 'Lainnya';
+-            let biggestCategoryTotal = 0;
+-            for (let c in categoryMap) {
+-                if (categoryMap[c] > biggestCategoryTotal) {
+-                    biggestCategoryTotal = categoryMap[c];
+-                    biggestCategory = c;
+-                }
+-            }
+-
+-            let categoryPct = totalKeluar > 0 ? Math.round((biggestCategoryTotal / totalKeluar) * 100) : 0;
+-
+-            let diffHtml = "";
+-
+-            if (isAllMonths) {
+-                let highestMonth = '-';
+-                let highestExpense = 0;
+-                for (let m in monthlyExpenseMap) {
+-                    if (monthlyExpenseMap[m] > highestExpense) {
+-                        highestExpense = monthlyExpenseMap[m];
+-                        highestMonth = m;
+-                    }
+-                }
+-                diffHtml = `<li>Bulan dengan rekor pengeluaran tertinggi adalah <b>${highestMonth}</b> (mencapai Rp ${highestExpense.toLocaleString('id-ID')}).</li>`;
+-            } else {
+-                let targetDate = currentMonthData[0].date;
+-                let prevMonthDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 15);
+-                const monthsId = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+-                let prevMonthYear = monthsId[prevMonthDate.getMonth()] + ' ' + prevMonthDate.getFullYear();
+-
+-                let prevMonthData = parsedData.filter(d => d.monthYear === prevMonthYear);
+-                let prevTotalKeluar = 0;
+-                prevMonthData.forEach(d => prevTotalKeluar += d.keluar);
+-
+-                let diffText = "";
+-                let diffColor = "var(--text-main)";
+-                let prevMonthName = prevMonthYear.split(' ')[0];
+-
+-                if (prevTotalKeluar > 0) {
+-                    let diff = totalKeluar - prevTotalKeluar;
+-                    let pct = Math.abs(Math.round((diff / prevTotalKeluar) * 100));
+-                    if (diff > 0) {
+-                        diffText = `Terdapat kenaikan pengeluaran sebesar ${pct}%`;
+-                        diffColor = "var(--danger-color)";
+-                    } else if (diff < 0) {
+-                        diffText = `Terdapat penurunan pengeluaran sebesar ${pct}%`;
+-                        diffColor = "var(--success-color)";
+-                    } else {
+-                        diffText = `Pengeluaran sama persis`;
+-                    }
+-                } else {
+-                    diffText = `Belum ada data pembanding`;
+-                    prevMonthName = "bulan sebelumnya";
+-                }
+-
+-                diffHtml = `<li><span style="color: ${diffColor};">${diffText}</span> dibandingkan bulan sebelumnya (${prevMonthName}).</li>`;
+-            }
+-
+-            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+-            const gradientBg = isLight ? 'linear-gradient(to right, rgba(239, 68, 68, 0.08), transparent)' : 'linear-gradient(to right, rgba(239, 68, 68, 0.15), rgba(31, 41, 55, 0))';
+-
+-            const periodText = isAllMonths ? 'Keseluruhan Waktu' : targetMonthYear.split(' ')[0];
+-
+-            const html = `
+-                <div style="background: ${gradientBg}; border-left: 4px solid var(--danger-color); border-radius: 8px; padding: 1.5rem; color: var(--text-main); margin-top: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+-                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; font-weight: 700; font-size: 1.2rem;">
+-                        <div style="background: var(--danger-color); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">
+-                            <i class="ri-flashlight-fill"></i>
+-                        </div>
+-                        AI Insight
+-                    </div>
+-                    <p style="margin-bottom: 1.25rem; line-height: 1.6; font-size: 1.05rem;">
+-                        Pada periode <b>${periodText}</b>, tercatat kas masuk sebesar <b>${formatRupiah(totalMasuk)}</b> dan kas keluar sebesar <b>${formatRupiah(totalKeluar)}</b>. Sisa saldo operasional adalah <b>${formatRupiah(saldo)}</b>.
+-                    </p>
+-                    <ul style="margin: 0; padding-left: 1.25rem; line-height: 1.8; font-size: 1.05rem;">
+-                        <li>Pengeluaran terbesar dialokasikan untuk unit <b>${biggestUnit}</b> senilai Rp ${biggestUnitTotal.toLocaleString('id-ID')}.</li>
+-                        <li>Dilihat dari jenisnya, kategori <b>${biggestCategory}</b> mendominasi sebesar <b>${categoryPct}%</b> dari total pengeluaran.</li>
+-                        ${diffHtml}
+-                    </ul>
+-                </div>
+-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+-                    <!-- Kas Masuk Card -->
+-                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+-                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+-                            <i class="ri-arrow-right-down-line"></i>
+-                        </div>
+-                        <div>
+-                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(totalMasuk)}</div>
+-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Kas Masuk</div>
+-                        </div>
+-                    </div>
+-                    <!-- Kas Keluar Card -->
+-                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+-                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(31, 41, 55, 0.08); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+-                            <i class="ri-arrow-right-up-line"></i>
+-                        </div>
+-                        <div>
+-                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(totalKeluar)}</div>
+-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Kas Keluar</div>
+-                        </div>
+-                    </div>
+-                    <!-- Sisa Saldo Card -->
+-                    <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+-                        <div style="width: 48px; height: 48px; border-radius: 10px; background: rgba(139, 92, 246, 0.15); color: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+-                            <i class="ri-wallet-3-fill"></i>
+-                        </div>
+-                        <div>
+-                            <div id="top-card-sisa-saldo" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(window.currentAiSaldo || 0)}</div>
+-                            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Sisa Saldo</div>
+-                        </div>
+-                    </div>
+-                </div>
+-            `;
+-
+-            document.getElementById('ai-insights-container').innerHTML = html;
+         }
+ 
+-        const reportJagoCache = {};
+-        async function fetchJagoData() {
+-            try {
+-                const filterSelect = document.getElementById('global-month-filter');
+-                let monthParam = '';
+-                if (filterSelect && filterSelect.value) {
+-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+-                }
+-
+-                let result;
+-                if (reportJagoCache[monthParam]) {
+-                    result = reportJagoCache[monthParam];
+-                } else {
+-                    const response = await fetch(SCRIPT_URL + '?action=jago_data' + monthParam + '&t=' + new Date().getTime());
+-                    result = await response.json();
+-                    if (result.success) reportJagoCache[monthParam] = result;
+-                }
+-
+-                if (result.success && result.data) {
+-                    // Update global dropdown filter if it hasn't been populated
+-                    if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
+-                        const currentVal = filterSelect.value || result.currentMonth;
+-                        filterSelect.innerHTML = '';
+-                        result.months.forEach(m => {
+-                            const option = document.createElement('option');
+-                            option.value = m === 'Semua Bulan' ? '' : m;
+-                            option.textContent = m;
+-                            if (currentVal === option.value || currentVal === m) option.selected = true;
+-                            filterSelect.appendChild(option);
+-                        });
+-                    }
+-
+-                    window.aggregatedJagoData = result.data;
+-                    renderJagoPieChartAndTable(window.aggregatedJagoData);
+-                    renderJagoChart(window.aggregatedJagoData); // Keep the bar chart too if needed
+-                } else {
+-                    console.error('Failed to fetch Jago data:', result.message);
+-                }
+-            } catch (error) {
+-                console.error('Network error fetching Jago data:', error);
+-            }
+-        }
+-
+-        function getPlanningByUnit() {
+-            let planningByUnit = {};
+-            let textData = reportPlanningCache['GLOBAL'];
+-            if (textData) {
+-                try {
+-                    let data = JSON.parse(textData);
+-                    data.forEach(item => {
+-                        if (item.unit) {
+-                            let u = item.unit.trim().toUpperCase();
+-                            let amt = parseAmountSafeClient(item.amount) || 0;
+-                            if (!planningByUnit[u]) planningByUnit[u] = 0;
+-                            planningByUnit[u] += amt;
+-                        }
+-                    });
+-                } catch(e) {}
+-            }
+-            return planningByUnit;
+-        }
+-
+-        function renderJagoPieChartAndTable(data) {
+-            let totalAmount = 0;
+-            let totalCount = 0;
+-            let totalEstimasi = 0;
+-            const labels = [];
+-            const amounts = [];
+-
+-            data.sort((a, b) => b.total - a.total); // Sort descending by total
+-            
+-            const planningByUnit = getPlanningByUnit();
+-
+-            data.forEach(item => {
+-                totalAmount += item.total;
+-                totalCount += item.count;
+-                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+-                totalEstimasi += estimasiUnit;
+-            });
+-
+-            // Calculate Total Prognosa Bulan Ini
+-            // Formula: Total Saldo Bulan Ini - Total Saldo Nominal - Total Keseluruhan Estimasi Budget
+-            let globalSaldo = window.currentGlobalSaldo || 0;
+-            let prognosaGlobal = globalSaldo - totalAmount - totalEstimasi;
+-            let prognosaHtml = window.currentGlobalSaldo ? formatRupiah(prognosaGlobal) : '-';
+-
+-            let html = '';
+-            data.forEach(item => {
+-                labels.push(item.unit);
+-                amounts.push(item.total);
+-                
+-                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+-
+-                html += `
+-                    <tr style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-input)'" onmouseout="this.style.backgroundColor='transparent'" onclick="showUnitDetails('${item.unit}')">
+-                        <td style="font-weight: 500; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;"><i class="ri-search-eye-line"></i> ${item.unit}</td>
+-                        <td style="color: var(--text-muted); font-weight: 500; text-align: center;">-</td>
+-                        <td style="font-weight: 600; color: var(--danger-color); background: var(--danger-light);">${item.count} Pengajuan</td>
+-                        <td style="font-weight: 600; color: var(--danger-color); background: var(--danger-light);">${formatRupiah(item.total)}</td>
+-                        <td style="font-weight: 600; color: #f59e0b; ${estimasiUnit > 0 ? 'cursor: pointer; text-decoration: underline;' : ''}" ${estimasiUnit > 0 ? `onclick="showPlanningDetailsModal('${item.unit}'); event.stopPropagation();"` : ''}>${estimasiUnit > 0 ? formatRupiah(estimasiUnit) : '-'}</td>
+-                        <td style="color: var(--text-muted); font-weight: 500; text-align: center;">-</td>
+-                        <td style="color: var(--text-muted); font-weight: 500; text-align: center;">-</td>
+-                    </tr>
+-                `;
+-            });
+-
+-            // Add Total row
+-            let globalSaldoHtml = window.currentGlobalSaldo ? formatRupiah(window.currentGlobalSaldo) : '-';
+-            html += `
+-                <tr style="background: var(--bg-main);">
+-                    <td style="font-weight: 700;">TOTAL KESELURUHAN</td>
+-                    <td style="font-weight: 700;">${globalSaldoHtml}</td>
+-                    <td style="font-weight: 700; color: var(--danger-color); font-size: 1.1rem; background: var(--danger-light);">${totalCount} Pengajuan</td>
+-                    <td style="font-weight: 700; color: var(--danger-color); font-size: 1.1rem; background: var(--danger-light);">${formatRupiah(totalAmount)}</td>
+-                    <td style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">${totalEstimasi > 0 ? formatRupiah(totalEstimasi) : '-'}</td>
+-                    <td style="font-weight: 700; color: ${prognosaGlobal >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-size: 1.1rem;">${prognosaHtml}</td>
+-                    <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem;">${window.currentAiSaldo !== undefined ? formatRupiah(window.currentAiSaldo) : '-'}</td>
++        undefined ? formatRupiah(window.currentAiSaldo) : '-'}</td>
+                 </tr>
+             `;
+ 
+\ No newline at end of file
+@@ -2237,94 +1226,7 @@
+             }
+         }
+ 
+-        const reportNeracaCache = {};
+-        async function fetchNeracaData() {
+-            try {
+-                const filterSelect = document.getElementById('global-month-filter');
+-                let monthParam = '';
+-                if (filterSelect && filterSelect.value) {
+-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+-                }
+-
+-                let result;
+-                if (reportNeracaCache[monthParam]) {
+-                    result = reportNeracaCache[monthParam];
+-                } else {
+-                    const response = await fetch(`${SCRIPT_URL}?action=neraca_data${monthParam}&t=${new Date().getTime()}`);
+-                    result = await response.json();
+-                    if (result.success) reportNeracaCache[monthParam] = result;
+-                }
+-
+-                if (result.success && result.data) {
+-                    // Ekstrak Saldo Akhir yang akurat dari data Neraca
+-                    let saldoAkhir = 0;
+-                    let saldoAwal = 0;
+-                    let totalPemasukan = 0;
+-                    for (let i = 0; i < result.data.length; i++) {
+-                        let rowLabel = result.data[i][0] ? result.data[i][0].toString().toUpperCase() : "";
+-                        if (rowLabel === "SALDO AKHIR") {
+-                            saldoAkhir = parseFloat(result.data[i][1]) || 0;
+-                        } else if (rowLabel === "SALDO AWAL") {
+-                            saldoAwal = parseFloat(result.data[i][1]) || 0;
+-                        } else if (rowLabel === "TOTAL PEMASUKAN") {
+-                            totalPemasukan = parseFloat(result.data[i][1]) || 0;
+-                        }
+-                    }
+-                    window.currentAiSaldo = saldoAkhir;
+-                    window.currentGlobalSaldo = saldoAwal + totalPemasukan;
+-                    
+-                    let sisaSaldoCard = document.getElementById('top-card-sisa-saldo');
+-                    if (sisaSaldoCard) {
+-                        sisaSaldoCard.innerText = formatRupiah(saldoAkhir);
+-                    }
+-                    
+-                    // Trigger re-render of Jago Table to populate Total Saldo Bulan Ini
+-                    if (window.aggregatedJagoData) {
+-                        renderJagoPieChartAndTable(window.aggregatedJagoData);
+-                    }
+-
+-                    // Update global dropdown filter if it hasn't been populated
+-                    if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
+-                        const currentVal = filterSelect.value || result.currentMonth;
+-                        filterSelect.innerHTML = '';
+-                        result.months.forEach(m => {
+-                            const option = document.createElement('option');
+-                            option.value = m === 'Semua Bulan' ? '' : m;
+-                            option.textContent = m;
+-                            if (currentVal === option.value || currentVal === m) option.selected = true;
+-                            filterSelect.appendChild(option);
+-                        });
+-                    }
+-
+-                    renderNeracaTable(result.data);
+-                } else {
+-                    console.error('Failed to fetch Neraca data:', result.message);
+-                    document.getElementById('neraca-body').innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--danger-color);">Gagal memuat data neraca: ${result.message}</td></tr>`;
+-                }
+-            } catch (error) {
+-                console.error('Error fetching neraca:', error);
+-                document.getElementById('neraca-body').innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--danger-color);">Error koneksi saat memuat neraca.</td></tr>`;
+-            }
+-        }
+-
+-        function renderNeracaTable(data) {
+-            const tbody = document.getElementById('neraca-body');
+-
+-            let startIndex = 0;
+-            if (data.length > 0 && data[0][0] === "Nama Akun") {
+-                startIndex = 1;
+-            }
+-
+-            if (data.length <= startIndex) {
+-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Data neraca kosong.</td></tr>`;
+-                return;
+-            }
+-
+-            let html = '';
+-            for (let i = startIndex; i < data.length; i++) {
+-                const row = data[i];
+-                const namaAkun = row[0] || '';
+-                const debit = (row[1] !== '' && row[1] !== null && row[1] !== undefined) ? formatRupiah(row[1]) : '-';
++        undefined) ? formatRupiah(row[1]) : '-';
+                 const kredit = (row[2] !== '' && row[2] !== null && row[2] !== undefined) ? formatRupiah(row[2]) : '-';
+ 
+                 let rowStyle = '';
+\ No newline at end of file

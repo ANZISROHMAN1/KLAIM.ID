@@ -322,23 +322,11 @@ function doGet(e) {
 
     // 3. neraca_data
     try {
-      var neracaSheet = ss.getSheetByName('Neraca Keuangan');
       var filterMonthN = e.parameter.month || "Semua Bulan";
-      if (neracaSheet) {
-        neracaSheet.getRange("E2").setNumberFormat("@");
-        neracaSheet.getRange("E2").setValue(filterMonthN);
-      }
-      try { updateNeracaKeuangan(); } catch(e) {}
-      
-      neracaSheet = ss.getSheetByName('Neraca Keuangan'); 
-      if (neracaSheet) {
-        var dataNeraca = neracaSheet.getDataRange().getValues();
-        var availableMonthsN = ["Semua Bulan"];
-        var rule = neracaSheet.getRange("E2").getDataValidation();
-        if (rule) availableMonthsN = rule.getCriteriaValues()[0];
-        var currentMonthN = neracaSheet.getRange("E2").getValue() || "Semua Bulan";
-        
-        result.neraca_data = {success: true, data: dataNeraca, months: availableMonthsN, currentMonth: currentMonthN};
+      var neracaRes = updateNeracaKeuangan(filterMonthN);
+      if (neracaRes) {
+        var availableMonthsN = ["Semua Bulan"].concat(neracaRes.months);
+        result.neraca_data = {success: true, data: neracaRes.data, months: availableMonthsN, currentMonth: filterMonthN};
       }
     } catch(err) {}
 
@@ -934,14 +922,14 @@ function processParsedJagoData(transactions) {
   return "Berhasil! " + addedCount + " transaksi baru telah di-import ke sheet REKAPAN JAGO.";
 }
 
-function updateNeracaKeuangan() {
+function updateNeracaKeuangan(inMemoryFilter) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var jagoSheet = ss.getSheetByName('REKAPAN JAGO');
   var neracaSheet = ss.getSheetByName('Neraca Keuangan');
   
-  if (!jagoSheet) return;
+  if (!jagoSheet) return null;
   
-  if (!neracaSheet) {
+  if (!inMemoryFilter && !neracaSheet) {
     neracaSheet = ss.insertSheet('Neraca Keuangan');
   }
   
@@ -1028,27 +1016,31 @@ function updateNeracaKeuangan() {
   
   var availableMonths = Object.keys(monthsSet);
   
-  // Baca filter dari E2 Neraca Keuangan
-  var filterRaw = neracaSheet.getRange("E2").getValue();
-  var selectedFilter = "";
-  
-  if (filterRaw instanceof Date) {
-      var monthYearFmt = Utilities.formatDate(filterRaw, Session.getScriptTimeZone(), "MMMM yyyy");
-      selectedFilter = monthYearFmt.replace('January', 'Januari').replace('February', 'Februari').replace('March', 'Maret').replace('May', 'Mei').replace('June', 'Juni').replace('July', 'Juli').replace('August', 'Agustus').replace('October', 'Oktober').replace('December', 'Desember');
-  } else if (filterRaw) {
-      selectedFilter = filterRaw.toString().trim();
+  var selectedFilter = "Semua Bulan";
+  if (inMemoryFilter) {
+      selectedFilter = inMemoryFilter;
+  } else {
+      // Baca filter dari E2 Neraca Keuangan
+      var filterRaw = neracaSheet.getRange("E2").getValue();
+      
+      if (filterRaw instanceof Date) {
+          var monthYearFmt = Utilities.formatDate(filterRaw, Session.getScriptTimeZone(), "MMMM yyyy");
+          selectedFilter = monthYearFmt.replace('January', 'Januari').replace('February', 'Februari').replace('March', 'Maret').replace('May', 'Mei').replace('June', 'Juni').replace('July', 'Juli').replace('August', 'Agustus').replace('October', 'Oktober').replace('December', 'Desember');
+      } else if (filterRaw) {
+          selectedFilter = filterRaw.toString().trim();
+      }
+      
+      if (!selectedFilter || (selectedFilter !== "Semua Bulan" && !monthsSet[selectedFilter])) {
+          selectedFilter = "Semua Bulan";
+          neracaSheet.getRange("E2").setNumberFormat("@");
+          neracaSheet.getRange("E2").setValue(selectedFilter);
+      }
+      
+      // Setup Dropdown di E2
+      var rule = SpreadsheetApp.newDataValidation().requireValueInList(["Semua Bulan"].concat(availableMonths)).build();
+      neracaSheet.getRange("E1").setValue("Filter Bulan:").setFontWeight("bold");
+      neracaSheet.getRange("E2").setDataValidation(rule).setBackground("#fef08a");
   }
-  
-  if (!selectedFilter || (selectedFilter !== "Semua Bulan" && !monthsSet[selectedFilter])) {
-      selectedFilter = "Semua Bulan";
-      neracaSheet.getRange("E2").setNumberFormat("@");
-      neracaSheet.getRange("E2").setValue(selectedFilter);
-  }
-  
-  // Setup Dropdown di E2
-  var rule = SpreadsheetApp.newDataValidation().requireValueInList(["Semua Bulan"].concat(availableMonths)).build();
-  neracaSheet.getRange("E1").setValue("Filter Bulan:").setFontWeight("bold");
-  neracaSheet.getRange("E2").setDataValidation(rule).setBackground("#fef08a");
   
   // --- MULAI PERBAIKAN LOGIKA SALDO AWAL & MTD ---
   
@@ -1090,6 +1082,9 @@ function updateNeracaKeuangan() {
   }
   
   if (filteredData.length === 0) {
+      if (inMemoryFilter) {
+          return { data: [["Tidak ada data untuk " + selectedFilter, "", ""]], months: availableMonths };
+      }
       neracaSheet.getRange("A:C").clear(); 
       neracaSheet.getRange("A1").setValue("Tidak ada data untuk " + selectedFilter);
       return; 
@@ -1157,8 +1152,6 @@ function updateNeracaKeuangan() {
     }
   }
   
-  neracaSheet.getRange("A:D").clear();
-  
   var neracaData = [];
   neracaData.push(["Nama Akun", "Debit (Pemasukan)", "Kredit (Pengeluaran)"]);
   
@@ -1196,6 +1189,11 @@ function updateNeracaKeuangan() {
   saldoAkhir = saldoAwal + totalPemasukan - totalPengeluaran;
   neracaData.push(["SALDO AKHIR", saldoAkhir, ""]);
   
+  if (inMemoryFilter) {
+      return { data: neracaData, months: availableMonths };
+  }
+  
+  neracaSheet.getRange("A:D").clear();
   neracaSheet.getRange(1, 1, neracaData.length, 3).setValues(neracaData);
   
   neracaSheet.getRange("A1:C1").setFontWeight("bold").setBackground("#f3f4f6");
