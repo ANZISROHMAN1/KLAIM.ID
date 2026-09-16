@@ -1481,7 +1481,7 @@ function parseDateSafeClient(val) {
             });
 
             let saldo = totalMasuk - totalKeluar;
-            window.currentAiSaldo = saldo;
+            // DO NOT overwrite window.currentAiSaldo here!
 
             let biggestUnit = 'Tanpa Unit';
             let biggestUnitTotal = 0;
@@ -1598,7 +1598,7 @@ function parseDateSafeClient(val) {
                             <i class="ri-wallet-3-fill"></i>
                         </div>
                         <div>
-                            <div style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(saldo)}</div>
+                            <div id="top-card-sisa-saldo" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.1rem; line-height: 1.2;">${formatRupiah(window.currentAiSaldo || 0)}</div>
                             <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Sisa Saldo</div>
                         </div>
                     </div>
@@ -2094,6 +2094,11 @@ function parseDateSafeClient(val) {
                     }
                     window.currentAiSaldo = saldoAkhir;
                     window.currentGlobalSaldo = saldoAwal + totalPemasukan;
+                    
+                    let sisaSaldoCard = document.getElementById('top-card-sisa-saldo');
+                    if (sisaSaldoCard) {
+                        sisaSaldoCard.innerText = formatRupiah(saldoAkhir);
+                    }
                     
                     // Trigger re-render of Jago Table to populate Total Saldo Bulan Ini
                     if (window.aggregatedJagoData) {
