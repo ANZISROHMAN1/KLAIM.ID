@@ -321,16 +321,18 @@
                             <div class="table-container">
                                 <table class="modern-table">
                                     <thead>
+                                        <tr>
                                             <th>Unit</th>
                                             <th>Total Saldo Bulan Ini (Rp)</th>
                                             <th>Total Pengajuan</th>
                                             <th>Total Nominal (Rp)</th>
                                             <th>Estimasi Budget (Rp)</th>
+                                            <th>Total Prognosa Bulan Ini (Rp)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="report-summary-body">
                                         <tr>
-                                            <td colspan="5"
+                                            <td colspan="6"
                                                 style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                                 Memuat data...</td>
                                         </tr>
@@ -1679,15 +1681,25 @@ function parseDateSafeClient(val) {
             
             const planningByUnit = getPlanningByUnit();
 
+            data.forEach(item => {
+                totalAmount += item.total;
+                totalCount += item.count;
+                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+                totalEstimasi += estimasiUnit;
+            });
+
+            // Calculate Total Prognosa Bulan Ini
+            // Formula: Total Saldo Bulan Ini - Total Saldo Nominal - Total Keseluruhan Estimasi Budget
+            let globalSaldo = window.currentGlobalSaldo || 0;
+            let prognosaGlobal = globalSaldo - totalAmount - totalEstimasi;
+            let prognosaHtml = window.currentGlobalSaldo ? formatRupiah(prognosaGlobal) : '-';
+
             let html = '';
             data.forEach(item => {
                 labels.push(item.unit);
                 amounts.push(item.total);
-                totalAmount += item.total;
-                totalCount += item.count;
                 
                 let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
-                totalEstimasi += estimasiUnit;
 
                 let globalSaldoHtml = window.currentGlobalSaldo ? formatRupiah(window.currentGlobalSaldo) : '-';
 
@@ -1696,8 +1708,9 @@ function parseDateSafeClient(val) {
                         <td style="font-weight: 500; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;"><i class="ri-search-eye-line"></i> ${item.unit}</td>
                         <td style="color: var(--text-main); font-weight: 500;">${globalSaldoHtml}</td>
                         <td>${item.count} Pengajuan</td>
-                        <td style="font-weight: 600; color: var(--success-color);">${formatRupiah(item.total)}</td>
+                        <td style="font-weight: 600; color: var(--danger-color);">${formatRupiah(item.total)}</td>
                         <td style="font-weight: 600; color: #f59e0b;">${estimasiUnit > 0 ? formatRupiah(estimasiUnit) : '-'}</td>
+                        <td style="font-weight: 600; color: ${prognosaGlobal >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">${prognosaHtml}</td>
                     </tr>
                 `;
             });
@@ -1709,14 +1722,15 @@ function parseDateSafeClient(val) {
                     <td style="font-weight: 700;">TOTAL KESELURUHAN</td>
                     <td style="font-weight: 700;">${globalSaldoHtml}</td>
                     <td style="font-weight: 700;">${totalCount} Pengajuan</td>
-                    <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem;">${formatRupiah(totalAmount)}</td>
+                    <td style="font-weight: 700; color: var(--danger-color); font-size: 1.1rem;">${formatRupiah(totalAmount)}</td>
                     <td style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">${totalEstimasi > 0 ? formatRupiah(totalEstimasi) : '-'}</td>
+                    <td style="font-weight: 700; color: ${prognosaGlobal >= 0 ? 'var(--success-color)' : 'var(--danger-color)'}; font-size: 1.1rem;">${prognosaHtml}</td>
                 </tr>
             `;
 
             const tbody = document.getElementById('report-summary-body');
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 tbody.innerHTML = html;
             }
