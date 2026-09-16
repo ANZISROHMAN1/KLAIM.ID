@@ -323,14 +323,13 @@
                                     <thead>
                                         <tr>
                                             <th>Unit</th>
-                                            <th>Sub Unit</th>
-                                            <th>Jumlah Pengajuan</th>
+                                            <th>Total Pengajuan</th>
                                             <th>Total Nominal (Rp)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="report-summary-body">
                                         <tr>
-                                            <td colspan="4"
+                                            <td colspan="3"
                                                 style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                                 Memuat data...</td>
                                         </tr>
@@ -823,7 +822,7 @@
             // Update Table
             const tbody = document.getElementById('report-summary-body');
             if (labels.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 let html = '';
                 labels.forEach(label => {
