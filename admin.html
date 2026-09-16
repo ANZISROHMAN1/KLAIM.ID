@@ -922,6 +922,8 @@
                     }
                 } catch(e) {
                     console.error('Error processing Neraca Data:', e);
+                    const nb = document.getElementById('neraca-body');
+                    if (nb) nb.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--danger-color);">Error processing Neraca Data: ${e.message}</td></tr>`;
                 }
                 
                 // Process Planning Data
@@ -932,6 +934,8 @@
                     }
                 } catch(e) {
                     console.error('Error processing Planning Data:', e);
+                    const pc = document.getElementById('planning-content');
+                    if (pc) pc.innerHTML = `<div style="color:red">Error processing Planning: ${e.message}</div>`;
                 }
 
                 // Process Insights Data
@@ -943,6 +947,8 @@
                     }
                 } catch(e) {
                     console.error('Error processing Insights Data:', e);
+                    const ic = document.getElementById('ai-insights-container');
+                    if (ic) ic.innerHTML = `<div style="color:red">Error processing Insights: ${e.message}</div>`;
                 }
 
                 // Process Jago Data
@@ -951,9 +957,12 @@
                         reportJagoCache[monthParam] = result.jago_data;
                         window.aggregatedJagoData = result.jago_data.data;
                         renderJagoPieChartAndTable(window.aggregatedJagoData);
+                        renderJagoChart(window.aggregatedJagoData); // This fixes the empty Bar Chart!
                     }
                 } catch(e) {
                     console.error('Error processing Jago Data:', e);
+                    const tb = document.getElementById('report-summary-body');
+                    if (tb) tb.innerHTML = `<tr><td colspan="7" style="color:red;text-align:center">Error processing Jago Data: ${e.message}</td></tr>`;
                 }
                 
             } catch (error) {
@@ -1717,7 +1726,7 @@ function parseDateSafeClient(val) {
             data.forEach(item => {
                 totalAmount += item.total;
                 totalCount += item.count;
-                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+                let estimasiUnit = planningByUnit[String(item.unit).trim().toUpperCase()] || 0;
                 totalEstimasi += estimasiUnit;
             });
 
@@ -1732,7 +1741,7 @@ function parseDateSafeClient(val) {
                 labels.push(item.unit);
                 amounts.push(item.total);
                 
-                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+                let estimasiUnit = planningByUnit[String(item.unit).trim().toUpperCase()] || 0;
 
                 html += `
                     <tr style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-input)'" onmouseout="this.style.backgroundColor='transparent'" onclick="showUnitDetails('${item.unit}')">
