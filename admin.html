@@ -1026,7 +1026,7 @@
             document.getElementById('planning-modal-month').innerText = monthVal;
             document.getElementById('planning-modal-saldo').innerText = formatRupiah(window.currentAiSaldo || 0);
 
-            let currentText = reportPlanningCache[monthVal] || '';
+            let currentText = reportPlanningCache['GLOBAL'] || '';
             let data = [];
             try { if (currentText) data = JSON.parse(currentText); } catch (e) { }
 
