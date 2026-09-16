@@ -358,7 +358,7 @@ function doGet(e) {
     } catch(err) {}
 
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
-
+  }
   return ContentService.createTextOutput(JSON.stringify({success: false, message: 'Action not found'})).setMimeType(ContentService.MimeType.JSON);
 }
 
