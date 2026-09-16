@@ -1,4 +1,4 @@
-const CACHE_NAME = 'klaim-id-cache-v10';
+const CACHE_NAME = 'klaim-id-cache-v11';
 const urlsToCache = [
   '/',
   '/index.html',
