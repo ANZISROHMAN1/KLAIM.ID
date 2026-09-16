@@ -221,8 +221,6 @@ function doGet(e) {
       textFound = planData[1][2]; // Selalu ambil dari baris pertama (GLOBAL)
     }
     return ContentService.createTextOutput(JSON.stringify({success: true, data: textFound})).setMimeType(ContentService.MimeType.JSON);
-  }
-  
   } else if (action === 'dashboard_data') {
     var result = {};
     
