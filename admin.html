@@ -325,11 +325,12 @@
                                             <th>Unit</th>
                                             <th>Total Pengajuan</th>
                                             <th>Total Nominal (Rp)</th>
+                                            <th>Estimasi Budget (Rp)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="report-summary-body">
                                         <tr>
-                                            <td colspan="3"
+                                            <td colspan="4"
                                                 style="text-align: center; padding: 2rem; color: var(--text-muted);">
                                                 Memuat data...</td>
                                         </tr>
@@ -1005,6 +1006,11 @@
                 }
 
                 renderPlanningContent(textFound, window.currentAiSaldo);
+                
+                // Re-render Jago table to update Estimasi Budget column if Jago data is already loaded
+                if (window.aggregatedJagoData) {
+                    renderJagoPieChartAndTable(window.aggregatedJagoData);
+                }
             } catch (error) {
                 console.error(error);
                 document.getElementById('planning-content').innerHTML = '<span style="color: var(--danger-color);">Gagal memuat planning.</span>';
@@ -1110,6 +1116,9 @@
                 if (result.success) {
                     reportPlanningCache['GLOBAL'] = textData;
                     renderPlanningContent(textData, window.currentAiSaldo);
+                    if (window.aggregatedJagoData) {
+                        renderJagoPieChartAndTable(window.aggregatedJagoData);
+                    }
 
                     document.getElementById('planning-modal').style.display = 'none';
                     showAlert('Estimasi Budget berhasil disimpan!', 'success');
@@ -1620,8 +1629,9 @@ function parseDateSafeClient(val) {
                         });
                     }
 
-                    renderJagoPieChartAndTable(result.data);
-                    renderJagoChart(result.data); // Keep the bar chart too if needed
+                    window.aggregatedJagoData = result.data;
+                    renderJagoPieChartAndTable(window.aggregatedJagoData);
+                    renderJagoChart(window.aggregatedJagoData); // Keep the bar chart too if needed
                 } else {
                     console.error('Failed to fetch Jago data:', result.message);
                 }
@@ -1630,13 +1640,35 @@ function parseDateSafeClient(val) {
             }
         }
 
+        function getPlanningByUnit() {
+            let planningByUnit = {};
+            let textData = reportPlanningCache['GLOBAL'];
+            if (textData) {
+                try {
+                    let data = JSON.parse(textData);
+                    data.forEach(item => {
+                        if (item.unit) {
+                            let u = item.unit.trim().toUpperCase();
+                            let amt = parseAmountSafeClient(item.amount) || 0;
+                            if (!planningByUnit[u]) planningByUnit[u] = 0;
+                            planningByUnit[u] += amt;
+                        }
+                    });
+                } catch(e) {}
+            }
+            return planningByUnit;
+        }
+
         function renderJagoPieChartAndTable(data) {
             let totalAmount = 0;
             let totalCount = 0;
+            let totalEstimasi = 0;
             const labels = [];
             const amounts = [];
 
             data.sort((a, b) => b.total - a.total); // Sort descending by total
+            
+            const planningByUnit = getPlanningByUnit();
 
             let html = '';
             data.forEach(item => {
@@ -1644,12 +1676,16 @@ function parseDateSafeClient(val) {
                 amounts.push(item.total);
                 totalAmount += item.total;
                 totalCount += item.count;
+                
+                let estimasiUnit = planningByUnit[item.unit.toUpperCase()] || 0;
+                totalEstimasi += estimasiUnit;
 
                 html += `
                     <tr style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-input)'" onmouseout="this.style.backgroundColor='transparent'" onclick="showUnitDetails('${item.unit}')">
                         <td style="font-weight: 500; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;"><i class="ri-search-eye-line"></i> ${item.unit}</td>
                         <td>${item.count} Pengajuan</td>
                         <td style="font-weight: 600; color: var(--success-color);">${formatRupiah(item.total)}</td>
+                        <td style="font-weight: 600; color: #f59e0b;">${estimasiUnit > 0 ? formatRupiah(estimasiUnit) : '-'}</td>
                     </tr>
                 `;
             });
@@ -1660,12 +1696,13 @@ function parseDateSafeClient(val) {
                     <td style="font-weight: 700;">TOTAL KESELURUHAN</td>
                     <td style="font-weight: 700;">${totalCount} Pengajuan</td>
                     <td style="font-weight: 700; color: var(--success-color); font-size: 1.1rem;">${formatRupiah(totalAmount)}</td>
+                    <td style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">${totalEstimasi > 0 ? formatRupiah(totalEstimasi) : '-'}</td>
                 </tr>
             `;
 
             const tbody = document.getElementById('report-summary-body');
             if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">Tidak ada data</td></tr>`;
             } else {
                 tbody.innerHTML = html;
             }
