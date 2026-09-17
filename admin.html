@@ -544,6 +544,14 @@
         // GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPCucyjnWQmjzZzl1pd5jNSimIDHCO7t5lhoj-uddpSCcRWmxeTEU3nK-GToton9QSOQ/exec';
 
+        // Helper: get current month in Indonesian format matching backend (e.g. "September 2026")
+        function getCurrentMonthIndo() {
+            const now = new Date();
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return monthNames[now.getMonth()] + ' ' + now.getFullYear();
+        }
+        const DEFAULT_MONTH = getCurrentMonthIndo();
+
         function switchTab(tabId) {
             document.getElementById('nav-dashboard').classList.remove('active');
             document.getElementById('nav-report').classList.remove('active');
@@ -833,8 +841,9 @@
             try {
                 const filterSelect = document.getElementById('global-month-filter');
                 let monthParam = '';
-                if (filterSelect && filterSelect.value) {
-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+                const filterVal = (filterSelect && filterSelect.value) ? filterSelect.value : DEFAULT_MONTH;
+                if (filterVal) {
+                    monthParam = `&month=${encodeURIComponent(filterVal)}`;
                 }
                 
                 // Show loader if needed
@@ -909,7 +918,7 @@
                         }
                         
                         if (nResult.months && nResult.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
-                            const currentVal = filterSelect.value || nResult.currentMonth;
+                            const currentVal = filterSelect.value || DEFAULT_MONTH;
                             filterSelect.innerHTML = '';
                             nResult.months.forEach(m => {
                                 const option = document.createElement('option');
@@ -1666,8 +1675,9 @@ function parseDateSafeClient(val) {
             try {
                 const filterSelect = document.getElementById('global-month-filter');
                 let monthParam = '';
-                if (filterSelect && filterSelect.value) {
-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+                const filterVal = (filterSelect && filterSelect.value) ? filterSelect.value : DEFAULT_MONTH;
+                if (filterVal) {
+                    monthParam = `&month=${encodeURIComponent(filterVal)}`;
                 }
 
                 let result;
@@ -1682,7 +1692,7 @@ function parseDateSafeClient(val) {
                 if (result.success && result.data) {
                     // Update global dropdown filter if it hasn't been populated
                     if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
-                        const currentVal = filterSelect.value || result.currentMonth;
+                        const currentVal = filterSelect.value || DEFAULT_MONTH;
                         filterSelect.innerHTML = '';
                         result.months.forEach(m => {
                             const option = document.createElement('option');
@@ -2161,8 +2171,9 @@ function parseDateSafeClient(val) {
             try {
                 const filterSelect = document.getElementById('global-month-filter');
                 let monthParam = '';
-                if (filterSelect && filterSelect.value) {
-                    monthParam = `&month=${encodeURIComponent(filterSelect.value)}`;
+                const filterVal = (filterSelect && filterSelect.value) ? filterSelect.value : DEFAULT_MONTH;
+                if (filterVal) {
+                    monthParam = `&month=${encodeURIComponent(filterVal)}`;
                 }
 
                 let result;
@@ -2204,7 +2215,7 @@ function parseDateSafeClient(val) {
 
                     // Update global dropdown filter if it hasn't been populated
                     if (result.months && result.months.length > 0 && filterSelect && filterSelect.options.length <= 1) {
-                        const currentVal = filterSelect.value || result.currentMonth;
+                        const currentVal = filterSelect.value || DEFAULT_MONTH;
                         filterSelect.innerHTML = '';
                         result.months.forEach(m => {
                             const option = document.createElement('option');
