@@ -313,6 +313,7 @@
                         <div
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                             <h2 style="font-size: 1.25rem; font-weight: 600;">Laporan Keuangan per Unit</h2>
+                            <button onclick="showFormulaNotesModal()" title="Lihat Rumus Perhitungan" style="background: linear-gradient(135deg, #f59e0b, #f97316); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='scale(1.15) rotate(15deg)'; this.style.boxShadow='0 4px 16px rgba(245, 158, 11, 0.6)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(245, 158, 11, 0.4)';"><i class="ri-lightbulb-flash-line"></i></button>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: center;">
                             <div style="position: relative; height: 250px;">
@@ -540,7 +541,121 @@
         </div>
     </div>
 
+    <!-- Formula Notes Modal -->
+    <div id="formula-notes-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px;">
+        <div
+            style="max-width: 680px; width: 100%; text-align: left; background: var(--bg-mesh-1); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.6); border: 1px solid var(--border-color); animation: formulaModalSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(249, 115, 22, 0.05));">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: linear-gradient(135deg, #f59e0b, #f97316); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #fff; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);">
+                        <i class="ri-lightbulb-flash-line"></i>
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.15rem; color: var(--text-main); font-weight: 700;">Catatan Rumus Perhitungan</h2>
+                        <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Laporan Keuangan per Unit</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('formula-notes-modal').style.display='none'"
+                    style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center; transition: color 0.2s;" onmouseover="this.style.color='var(--danger-color)'" onmouseout="this.style.color='var(--text-muted)'"><i
+                        class="ri-close-line"></i></button>
+            </div>
+            <div style="overflow-y: auto; flex-grow: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+
+                <!-- Formula 1: Total Pemasukan Bulan Ini -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid #3b82f6; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-wallet-3-line" style="color: #3b82f6; font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Total Pemasukan Bulan Ini</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        <span style="color: #3b82f6; font-weight: 600;">Sisa Saldo Bulan Kemarin</span> <span style="color: var(--text-main);">+</span> <span style="color: #10b981; font-weight: 600;">Sisa Pemasukan Bulan Ini</span>
+                    </div>
+                </div>
+
+                <!-- Formula 2: Total Pengajuan -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid var(--danger-color); transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-file-list-3-line" style="color: var(--danger-color); font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Total Pengajuan</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        Diambil dari <span style="color: var(--danger-color); font-weight: 600;">Total Pengajuan dari setiap Unit</span>
+                    </div>
+                </div>
+
+                <!-- Formula 3: Total Nominal -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid var(--danger-color); transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-money-dollar-circle-line" style="color: var(--danger-color); font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Total Nominal</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        <span style="color: var(--danger-color); font-weight: 600;">Total Nominal</span> dari setiap pengajuan dari <span style="color: var(--primary-color); font-weight: 600;">Unit masing-masing</span>
+                    </div>
+                </div>
+
+                <!-- Formula 4: Estimasi Planning Budget -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid #f59e0b; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-pie-chart-2-line" style="color: #f59e0b; font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Estimasi Planning Budget</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        <span style="color: #f59e0b; font-weight: 600;">Total Planning Budget</span> dari <span style="color: var(--primary-color); font-weight: 600;">masing-masing Unit</span>
+                    </div>
+                </div>
+
+                <!-- Formula 5: Total Prognosa -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid #10b981; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-calculator-line" style="color: #10b981; font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Total Prognosa Bulan Ini</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        <span style="color: #3b82f6; font-weight: 600;">Total Pemasukan Bulan Ini</span> <span style="color: var(--text-main); font-weight: 700;">−</span> <span style="color: var(--danger-color); font-weight: 600;">Total Nominal</span> <span style="color: var(--text-main); font-weight: 700;">−</span> <span style="color: #f59e0b; font-weight: 600;">Estimasi Planning Budget</span>
+                        <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color); color: var(--text-muted); font-size: 0.8rem;">
+                            <span style="color: #10b981;">▶</span> Hasilnya = <span style="color: #10b981; font-weight: 600;">Total Prognosa Bulan Ini</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formula 6: Total Sisa Saldo Bulan Ini -->
+                <div style="background: var(--bg-input); border-radius: 12px; padding: 1rem 1.25rem; border-left: 4px solid #10b981; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <i class="ri-bank-card-line" style="color: #10b981; font-size: 1.1rem;"></i>
+                        <span style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Total Sisa Saldo Bulan Ini</span>
+                    </div>
+                    <div style="background: var(--bg-main); border-radius: 8px; padding: 0.75rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                        Nilai nominal yang diambil dari <span style="color: #10b981; font-weight: 600;">Sisa Saldo bulan ini</span> (saldo real-time)
+                    </div>
+                </div>
+
+            </div>
+            <div style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-main); display: flex; justify-content: flex-end;">
+                <button onclick="document.getElementById('formula-notes-modal').style.display='none'" class="btn" style="padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600;">Tutup</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes formulaModalSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+
     <script>
+        // Function to show formula notes modal
+        function showFormulaNotesModal() {
+            const modal = document.getElementById('formula-notes-modal');
+            modal.style.display = 'flex';
+            // Close on backdrop click
+            modal.onclick = function(e) {
+                if (e.target === modal) modal.style.display = 'none';
+            };
+        }
+
         // GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPCucyjnWQmjzZzl1pd5jNSimIDHCO7t5lhoj-uddpSCcRWmxeTEU3nK-GToton9QSOQ/exec';
 
