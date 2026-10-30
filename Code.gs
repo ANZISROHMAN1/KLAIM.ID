@@ -405,13 +405,16 @@ function doPost(e) {
         var base64Data = requestData.fileData.split(',')[1] || requestData.fileData;
         var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), requestData.mimeType, "TF_" + requestData.fileName);
         var file = folder.createFile(blob);
+        try {
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch(e) {}
         tfUrl = file.getUrl();
       }
       
       var rowIndex = parseInt(requestData.row_index);
       sheet.getRange(rowIndex, 8).setValue(requestData.status);
       if (tfUrl) sheet.getRange(rowIndex, 12).setValue(tfUrl);
-      return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({success: true, tfUrl: tfUrl})).setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'save_planning') {
       var planSheet = ss.getSheetByName('PLANNING_SALDO');
       if (!planSheet) {
