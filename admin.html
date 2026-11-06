@@ -48,6 +48,35 @@
             border: 1px solid var(--border-color);
             text-align: center;
         }
+
+        /* Responsive Styles for Evidence Modal */
+        .evidence-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.85rem;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .evidence-info-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.75rem !important;
+            }
+            .evidence-info-grid .col-span-2 {
+                grid-column: span 1 !important;
+            }
+            #evidence-upload-modal > div {
+                max-height: 94vh !important;
+                margin: 8px !important;
+                width: calc(100% - 16px) !important;
+            }
+            #evidence-upload-modal .ev-modal-body {
+                padding: 1rem !important;
+                gap: 0.9rem !important;
+            }
+            #ev-dropzone {
+                padding: 1.25rem 0.75rem !important;
+            }
+        }
     </style>
 </head>
 
@@ -580,10 +609,10 @@
             </div>
 
             <!-- Modal Body -->
-            <div style="overflow-y: auto; flex-grow: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="ev-modal-body" style="overflow-y: auto; flex-grow: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
                 <!-- Recipient & Amount Info Box -->
                 <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem 1.25rem;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; font-size: 0.9rem;">
+                    <div class="evidence-info-grid">
                         <div>
                             <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2px;">Penerima Dana</div>
                             <div id="ev-nama" style="font-weight: 600; color: var(--text-main); font-size: 1rem;">-</div>
@@ -597,7 +626,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div style="grid-column: span 2;">
+                        <div class="col-span-2" style="grid-column: span 2;">
                             <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2px;">Tujuan Rekening / E-Wallet</div>
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span id="ev-bank" style="font-weight: 600; padding: 2px 8px; border-radius: 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.85rem;">-</span>
@@ -615,7 +644,7 @@
                             <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2px;">Nota Asli Pengaju</div>
                             <div id="ev-nota-container" style="font-size: 0.85rem;">-</div>
                         </div>
-                        <div style="grid-column: span 2;">
+                        <div class="col-span-2" style="grid-column: span 2;">
                             <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 2px;">Keperluan / Kegiatan</div>
                             <div id="ev-kegiatan" style="color: var(--text-main); font-size: 0.85rem; line-height: 1.4;">-</div>
                         </div>
@@ -628,17 +657,20 @@
                         Bukti Transfer (Evidence) <span style="color: var(--danger-color);">*</span>
                     </label>
 
-                    <div id="ev-dropzone"
-                        style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 1.75rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-input);">
+                    <label for="ev-file-input" id="ev-dropzone"
+                        style="display: block; border: 2px dashed var(--border-color); border-radius: 12px; padding: 1.5rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg-input); -webkit-tap-highlight-color: transparent;">
                         <i class="ri-image-add-line" style="font-size: 2.5rem; color: var(--success-color); display: block; margin-bottom: 0.5rem;"></i>
                         <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--text-main);">
-                            Klik atau seret file bukti TF ke sini
+                            Ketuk untuk Pilih Foto / File Bukti TF
                         </div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">
-                            Mendukung JPG, PNG, WEBP, PDF (Maks. 10MB) &bull; Atau langsung tekan <strong>Ctrl/Cmd+V</strong> untuk paste screenshot
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                            Mendukung Kamera HP, Galeri (JPG, PNG, WEBP), atau PDF
                         </div>
-                    </div>
-                    <input type="file" id="ev-file-input" accept="image/*,.pdf" style="display: none;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.15); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.35); padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 0.82rem;">
+                            <i class="ri-folder-open-line"></i> Pilih dari Galeri / Kamera
+                        </div>
+                    </label>
+                    <input type="file" id="ev-file-input" accept="image/*,.pdf,application/pdf" style="display: none;">
 
                     <!-- Preview Container -->
                     <div id="ev-preview-container" style="display: none; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border-color); overflow: hidden;">
@@ -2533,10 +2565,66 @@ function parseDateSafeClient(val) {
             }
         }
 
-        function handleEvidenceFile(file) {
-            if (!file) return;
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert('Ukuran file maksimal 10MB', 'error');
+        async function compressImageIfNeeded(file) {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                return file;
+            }
+            if (file.size <= 500 * 1024) {
+                return file;
+            }
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const maxDim = 1600;
+                        let w = img.width;
+                        let h = img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w > h) {
+                                h = Math.round((h * maxDim) / w);
+                                w = maxDim;
+                            } else {
+                                w = Math.round((w * maxDim) / h);
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        canvas.toBlob(blob => {
+                            if (blob && blob.size < file.size) {
+                                const newName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+                                resolve(new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() }));
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/jpeg', 0.82);
+                    };
+                    img.onerror = () => resolve(file);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(file);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleEvidenceFile(rawFile) {
+            if (!rawFile) return;
+
+            let file = rawFile;
+            if (rawFile.type && rawFile.type.startsWith('image/') && rawFile.size > 500 * 1024) {
+                try {
+                    file = await compressImageIfNeeded(rawFile);
+                } catch(e) {
+                    console.warn('Image compression skipped:', e);
+                }
+            }
+
+            if (file.size > 15 * 1024 * 1024) {
+                showAlert('Ukuran file maksimal 15MB', 'error');
                 return;
             }
 
@@ -2671,6 +2759,13 @@ function parseDateSafeClient(val) {
 
             const dropzone = document.getElementById('ev-dropzone');
             if (dropzone) {
+                dropzone.addEventListener('click', function (e) {
+                    const fi = document.getElementById('ev-file-input');
+                    if (fi && e.target !== fi) {
+                        fi.click();
+                    }
+                });
+
                 ['dragenter', 'dragover'].forEach(eventName => {
                     dropzone.addEventListener(eventName, (e) => {
                         e.preventDefault();
