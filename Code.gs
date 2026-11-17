@@ -117,6 +117,9 @@ function doGet(e) {
         var keluar = parseFloat(jagoData[k][5]) || 0;
         if (keluar > 0) expense = keluar;
         unit = jagoData[k][7] || 'Tanpa Unit';
+        if ((!unit || unit === 'Tanpa Unit') && jagoData[k][6] && isNaN(parseFloat(jagoData[k][6])) && !String(jagoData[k][6]).includes("NUM")) {
+          unit = jagoData[k][6];
+        }
       } else {
         var amount = parseFloat(jagoData[k][4]) || 0;
         if (amount < 0) expense = Math.abs(amount);
@@ -294,6 +297,9 @@ function doGet(e) {
             var keluar = parseFloat(jagoData[k][5]) || 0;
             if (keluar > 0) expense = keluar;
             unit = jagoData[k][7] || 'Tanpa Unit';
+            if ((!unit || unit === 'Tanpa Unit') && jagoData[k][6] && isNaN(parseFloat(jagoData[k][6])) && !String(jagoData[k][6]).includes("NUM")) {
+              unit = jagoData[k][6];
+            }
           } else {
             var amount = parseFloat(jagoData[k][4]) || 0;
             if (amount < 0) expense = Math.abs(amount);
@@ -506,18 +512,111 @@ function formatTransactions(sheet) {
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('⚡ KLAIM.ID')
-      .addItem('🔄 Pisahkan Kolom Kas Masuk & Keluar', 'pisahkanKasMasukKeluar')
+      .addItem('🔄 Rapikan & Luruskan Kolom REKAPAN JAGO', 'pisahkanKasMasukKeluar')
       .addItem('📄 Import Rekapan Jago (PDF)', 'showImportDialog')
       .addItem('🧹 Bersihkan Data Klaim dari REKAPAN JAGO', 'bersihkanKlaimDariJago')
       .addToUi();
 }
 
-// Fungsi untuk memisahkan kolom Amount menjadi Kas Masuk & Kas Keluar secara otomatis pada sheet saat ini
+function cleanNumJago(s) {
+  if (s === null || s === undefined) return null;
+  if (typeof s === "number") return isNaN(s) ? null : s;
+  var str = s.toString().trim().replace(/www\.jago\.com/gi, "").replace(/rp\.?/gi, "").trim();
+  if (!str || str === "#NUM!" || str === "#VALUE!" || str === "#N/A" || str === "-") return null;
+  var isNeg = str.startsWith("-") || str.startsWith("(") || str.endsWith("-");
+  var clean = str.replace(/[-+–—−\(\)\s]/g, "");
+  if (!/^\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/.test(clean) && !/^\d+(?:,\d{1,2})?$/.test(clean) && !/^\d+$/.test(clean)) {
+    return null;
+  }
+  var num = parseFloat(clean.replace(/\./g, "").replace(/,/g, "."));
+  return isNeg ? -num : num;
+}
+
+function guessUnitJago(details, notes) {
+  var text = ((details || "") + " " + (notes || "")).toLowerCase();
+  if (text.includes("district")) return "District";
+  if (text.includes("osp")) return "OSP";
+  if (text.includes("isp")) return "ISP";
+  if (text.includes("hai") || text.includes("hi")) return "HAI";
+  if (text.includes("bges") || text.includes("mbb")) return "BGES & MBB";
+  if (text.includes("fbb")) return "FBB";
+  return "";
+}
+
+function realignSingleRow(row) {
+  var date = row[0] || "";
+  var source = (row[1] || "").toString().replace(/PT Bank Jago Tbk.*$/is, "").trim();
+  var details = row[2] || "";
+  var notes = (row[3] || "").toString().replace(/www\.jago\.com/gi, "").trim();
+  var colE = row[4];
+  var colF = row[5];
+  var colG = row[6];
+  var colH = row[7];
+
+  var kasMasuk = "";
+  var kasKeluar = "";
+  var balance = 0;
+  var unit = "";
+
+  // Deteksi kasus baris bergeser akibat footer www.jago.com (seperti baris 25 di sheet)
+  var isBrokenNumRow = (colG === "#NUM!" || String(colG).includes("NUM")) && 
+                       (notes.match(/[-+–—−]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/));
+
+  if (isBrokenNumRow) {
+    var noteMatch = notes.match(/[-+–—−]?\s*\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/);
+    var amtStr = noteMatch[0].trim();
+    notes = notes.slice(0, noteMatch.index).trim();
+    var amt = cleanNumJago(amtStr) || 0;
+    kasMasuk = amt > 0 ? amt : "";
+    kasKeluar = amt < 0 ? Math.abs(amt) : "";
+    balance = cleanNumJago(colE) || 0;
+    unit = colH ? colH.toString().trim() : guessUnitJago(details, notes);
+    return [date, source, details, notes, kasMasuk, kasKeluar, balance, unit];
+  }
+
+  var numE = cleanNumJago(colE);
+  var numF = cleanNumJago(colF);
+  var numG = cleanNumJago(colG);
+
+  // Case 1: Col G berisi teks unit (format lama 7 kolom)
+  if (colG && typeof colG === "string" && isNaN(Number(colG)) && numG === null && colG !== "#NUM!") {
+    var amt = numE || 0;
+    kasMasuk = amt > 0 ? amt : "";
+    kasKeluar = amt < 0 ? Math.abs(amt) : "";
+    balance = numF || 0;
+    unit = colG.trim();
+  }
+  // Case 2: Data 6 kolom (Col G kosong, Col E adalah amount, Col F adalah saldo)
+  else if (numG === null && numF !== null && numE !== null) {
+    kasMasuk = numE > 0 ? numE : "";
+    kasKeluar = numE < 0 ? Math.abs(numE) : "";
+    balance = numF;
+    unit = (colH && typeof colH === "string" && isNaN(Number(colH))) ? colH.trim() : guessUnitJago(details, notes);
+  }
+  // Case 3: Col E bernilai minus (pengeluaran yang salah tempat di Kas Masuk)
+  else if (numE !== null && numE < 0) {
+    kasMasuk = "";
+    kasKeluar = Math.abs(numE);
+    balance = numG || numF || 0;
+    unit = colH ? colH.toString().trim() : guessUnitJago(details, notes);
+  }
+  // Case 4: Format normal 8 kolom
+  else {
+    kasMasuk = numE !== null && numE > 0 ? numE : "";
+    kasKeluar = numF !== null && numF > 0 ? numF : "";
+    balance = numG || 0;
+    unit = colH ? colH.toString().trim() : guessUnitJago(details, notes);
+  }
+
+  return [date, source, details, notes, kasMasuk, kasKeluar, balance, unit];
+}
+
+// Fungsi untuk merapikan dan meluruskan kolom pada sheet REKAPAN JAGO secara otomatis
 function pisahkanKasMasukKeluar() {
   var ui = SpreadsheetApp.getUi();
   var confirm = ui.alert(
-    'Konfirmasi Pemisahan Kolom',
-    'Apakah Anda ingin memisahkan kolom Amount menjadi 2 kolom terpisah: "Kas Masuk" dan "Kas Keluar" di sheet REKAPAN JAGO?',
+    'Konfirmasi Rapikan Rekapan Jago',
+    'Apakah Anda ingin merapikan dan meluruskan kolom Kas Masuk, Kas Keluar, Saldo, dan Unit di sheet REKAPAN JAGO secara otomatis?',
     ui.ButtonSet.YES_NO
   );
   if (confirm !== ui.Button.YES) return;
@@ -535,56 +634,20 @@ function pisahkanKasMasukKeluar() {
     return;
   }
 
-  var headerRow = data[0];
-  var alreadySplit = (headerRow.length >= 8 && headerRow[4] && headerRow[4].toString().toLowerCase().includes('masuk')) ||
-                     (headerRow[5] && headerRow[5].toString().toLowerCase().includes('keluar'));
-                     
-  if (alreadySplit) {
-    formatTransactions(sheet);
-    sheet.autoResizeColumns(1, 8);
-    try { updateNeracaKeuangan(); } catch(e) {}
-    ui.alert('Kolom sudah dalam format terpisah (Kas Masuk & Kas Keluar). Format tampilan telah diperbarui!');
-    return;
-  }
-
-  function parseAmountNumber(val) {
-    if (typeof val === 'number') return val;
-    if (!val) return 0;
-    var str = val.toString().trim();
-    var isNeg = str.indexOf('-') !== -1 || (str.startsWith('(') && str.endsWith(')'));
-    var num = parseFloat(str.replace(/[^0-9]/g, '')) || 0;
-    return isNeg ? -num : num;
-  }
-
   var newHeaders = ["Date & Time", "Source/Destination", "Transaction Details", "Notes", "Kas Masuk", "Kas Keluar", "Balance", "Unit"];
   var newRows = [];
+  var fixedCount = 0;
 
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
     if (!row[0] && !row[1] && !row[2] && !row[4]) continue;
 
-    var amt = parseAmountNumber(row[4]);
-    var kasMasuk = amt > 0 ? amt : "";
-    var kasKeluar = amt < 0 ? Math.abs(amt) : "";
-
-    var balanceVal = row[5];
-    var bal = typeof balanceVal === 'number' ? balanceVal : (parseFloat(balanceVal.toString().replace(/[^0-9]/g, '')) || 0);
-    var unitVal = row[6] || "";
-
-    newRows.push([
-      row[0],    // Date & Time
-      row[1],    // Source/Dest
-      row[2],    // Details
-      row[3],    // Notes
-      kasMasuk,  // Kas Masuk (Col E)
-      kasKeluar, // Kas Keluar (Col F)
-      bal,       // Balance (Col G)
-      unitVal    // Unit (Col H)
-    ]);
+    var cleanedRow = realignSingleRow(row);
+    newRows.push(cleanedRow);
+    fixedCount++;
   }
 
   sheet.clear();
-
   sheet.getRange(1, 1, 1, newHeaders.length).setValues([newHeaders]);
   sheet.getRange(1, 1, 1, newHeaders.length).setFontWeight("bold").setBackground("#f3f4f6");
 
@@ -599,7 +662,7 @@ function pisahkanKasMasukKeluar() {
     updateNeracaKeuangan();
   } catch(e) {}
 
-  ui.alert('Berhasil! ' + newRows.length + ' baris transaksi telah dipisahkan menjadi kolom "Kas Masuk" dan "Kas Keluar".');
+  ui.alert('Berhasil! ' + fixedCount + ' baris transaksi pada REKAPAN JAGO telah dirapikan dan diluruskan ke format 8 kolom.');
 }
 
 // Fungsi pembantu untuk membersihkan riwayat pengajuan user yang pernah masuk ke REKAPAN JAGO
@@ -646,21 +709,23 @@ function showImportDialog() {
     <html>
       <head>
         <style>
-          body { font-family: sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; color: #333; }
           .container { display: flex; flex-direction: column; gap: 15px; }
-          button { background: #1a73e8; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; }
+          button { background: #1a73e8; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; font-weight: 500; }
           button:hover { background: #1557b0; }
-          #status { color: #555; font-size: 14px; margin-top: 10px; }
+          #status { font-size: 14px; margin-top: 10px; line-height: 1.5; }
+          .hint { font-size: 12px; color: #666; }
         </style>
         <!-- Load pdf.js -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
       </head>
       <body>
         <div class="container">
-          <h3>Upload PDF Rekapan Jago</h3>
-          <p>Pilih file PDF mutasi dari Bank Jago untuk di-import otomatis ke sheet REKAPAN JAGO.</p>
+          <h3 style="margin: 0;">Upload PDF Rekapan Jago</h3>
+          <p style="margin: 0; font-size: 14px;">Pilih file PDF mutasi dari Bank Jago untuk di-import otomatis ke sheet REKAPAN JAGO.</p>
           <input type="file" id="fileInput" accept="application/pdf" />
           <button onclick="uploadFile()">Import Data</button>
+          <div class="hint">Catatan: Header tabel, footer (lisensi LPS/OJK & website www.jago.com), dan nomor halaman difilter otomatis agar saldo tidak bergeser.</div>
           <div id="status"></div>
         </div>
         
@@ -685,15 +750,21 @@ function showImportDialog() {
                 var page = await pdf.getPage(i);
                 var textContent = await page.getTextContent();
                 var viewport = page.getViewport({scale: 1.0});
-                var width = viewport.width; // standard A4 is ~595
+                var width = viewport.width;
                 
-                // Group by Y coordinate (tolerate 3px difference)
+                // Group by Y coordinate (tolerate 4px difference)
                 var rows = {};
                 textContent.items.forEach(function(item) {
                   var text = item.str.trim();
                   if (!text) return;
                   
-                  // Filter header & footer PDF Jago
+                  var y = Math.round(item.transform[5]);
+                  var x = item.transform[4];
+                  
+                  // Filter batas margin atas & bawah (footer & header margin)
+                  if (y < 50 || y > 790) return;
+                  
+                  // Filter header & footer teks PDF Jago
                   var lowerText = text.toLowerCase();
                   if (lowerText === "date & time" || 
                       lowerText === "source/destination" || 
@@ -701,14 +772,26 @@ function showImportDialog() {
                       lowerText === "notes" || 
                       lowerText === "amount" || 
                       lowerText === "balance" || 
-                      lowerText.match(/^page\s+\d+/) || 
-                      lowerText.match(/^pockets transactions history/) ||
+                      lowerText === "tanggal & waktu" || 
+                      lowerText === "pengirim/penerima" || 
+                      lowerText === "detail transaksi" || 
+                      lowerText === "catatan" || 
+                      lowerText === "saldo" || 
+                      lowerText.includes("bank jago") || 
+                      lowerText.includes("jago.com") || 
+                      lowerText.includes("licensed and supervised") || 
+                      lowerText.includes("berizin dan diawasi") || 
+                      lowerText.includes("financial services authority") || 
+                      lowerText.includes("deposit insurance") || 
+                      lowerText.includes("penjaminan lps") || 
+                      lowerText === "ojk" || 
+                      lowerText === "lps" || 
+                      lowerText.match(/^page\\s+\\d+/i) || 
+                      lowerText.match(/pocket(s)?\\s+transaction(s)?\\s+history/i) || 
+                      lowerText.match(/riwayat\\s+transaksi/i) || 
                       lowerText === "jago") {
                       return;
                   }
-                  
-                  var y = Math.round(item.transform[5]);
-                  var x = item.transform[4];
                   
                   var foundY = y;
                   for (var key in rows) {
@@ -723,22 +806,25 @@ function showImportDialog() {
                 
                 sortedY.forEach(function(y) {
                   var items = rows[y];
+                  // Sort strictly from left to right (X ascending)
+                  items.sort(function(a, b) { return a.x - b.x; });
+                  
                   var col1=[], col2=[], col3=[], col4=[], col5=[], col6=[];
                   
                   // Distribute to columns based on X percentage of width
                   items.forEach(function(it) {
                     var pct = it.x / width;
-                    if (pct < 0.135) col1.push(it.text); // Date & Time
-                    else if (pct < 0.31) col2.push(it.text); // Source/Destination
-                    else if (pct < 0.47) col3.push(it.text); // Transaction Details
-                    else if (pct < 0.65) col4.push(it.text); // Notes
-                    else if (pct < 0.82) col5.push(it.text); // Amount
+                    if (pct < 0.15) col1.push(it.text); // Date & Time
+                    else if (pct < 0.33) col2.push(it.text); // Source/Destination
+                    else if (pct < 0.50) col3.push(it.text); // Transaction Details
+                    else if (pct < 0.68) col4.push(it.text); // Notes
+                    else if (pct < 0.84) col5.push(it.text); // Amount
                     else col6.push(it.text); // Balance
                   });
                   
                   var rowData = [
-                    col1.join(' '), col2.join(' '), col3.join(' '), 
-                    col4.join(' '), col5.join(' '), col6.join(' ')
+                    col1.join(' ').trim(), col2.join(' ').trim(), col3.join(' ').trim(), 
+                    col4.join(' ').trim(), col5.join(' ').trim(), col6.join(' ').trim()
                   ];
                   
                   // Only push rows that have some text
@@ -753,17 +839,23 @@ function showImportDialog() {
               var currentTx = null;
               
               parsedData.forEach(function(row) {
-                // If col1 matches a Date format (e.g., 11 Aug 2026 or 11:52)
-                var hasDate = row[0].match(/\\d{1,2} [A-Z][a-z]{2} \\d{4}/);
+                var hasDate = row[0].match(/\\d{1,2}\\s+[A-Za-z]{3}\\s+\\d{4}/);
                 var hasTime = row[0].match(/\\d{2}:\\d{2}/);
+                
+                var rowStr = row.join(' ').toLowerCase();
+                if (rowStr.includes('bank jago') || rowStr.includes('jago.com') || rowStr.includes('lps') || rowStr.includes('ojk')) {
+                  return; // Skip footer leakage
+                }
                 
                 if (hasDate) {
                   if (currentTx) finalTransactions.push(currentTx);
                   currentTx = [...row];
-                } else if (currentTx && (hasTime || row[1] || row[2])) {
+                } else if (currentTx && (hasTime || row[1] || row[2] || row[3] || row[4] || row[5])) {
                   // Merge multi-line into current transaction
                   for (var c = 0; c < 6; c++) {
-                    if (row[c]) currentTx[c] += (currentTx[c] ? "\\n" : "") + row[c];
+                    if (row[c]) {
+                      currentTx[c] = currentTx[c] ? (currentTx[c] + "\\n" + row[c]) : row[c];
+                    }
                   }
                 }
               });
@@ -788,10 +880,54 @@ function showImportDialog() {
       </body>
     </html>
   `)
-  .setWidth(500)
-  .setHeight(400);
+  .setWidth(520)
+  .setHeight(420);
   
   SpreadsheetApp.getUi().showModalDialog(html, 'Import Rekapan Jago');
+}
+
+function extractTrxMoneyAndNotes(notesCol, amountCol, balanceCol) {
+  var directBal = cleanNumJago(balanceCol);
+  var directAmt = cleanNumJago(amountCol);
+  if (directBal !== null && directAmt !== null) {
+    var cNotes = (notesCol || "").toString().replace(/www\.jago\.com/gi, "").trim();
+    return { notes: cNotes, amount: directAmt, balance: Math.abs(directBal) };
+  }
+  
+  var rawText = (notesCol + " " + amountCol + " " + balanceCol)
+                .replace(/www\.jago\.com/gi, "")
+                .replace(/pt bank jago.*/gis, "")
+                .replace(/page \d+.*/gi, "")
+                .trim();
+  var tokens = rawText.split(/\s+/).filter(Boolean);
+  var bal = null, balIdx = -1;
+  for (var i = tokens.length - 1; i >= 0; i--) {
+    var v = cleanNumJago(tokens[i]);
+    if (v !== null && v >= 0) { bal = v; balIdx = i; break; }
+  }
+  var amt = null, amtIdx = -1;
+  if (balIdx > 0) {
+    for (var j = balIdx - 1; j >= 0; j--) {
+      var cand = tokens[j];
+      if (j > 0 && /^[-+–—−]$/.test(tokens[j - 1])) cand = tokens[j - 1] + cand;
+      var va = cleanNumJago(cand);
+      if (va !== null) {
+        amt = va;
+        amtIdx = (j > 0 && /^[-+–—−]$/.test(tokens[j - 1])) ? j - 1 : j;
+        break;
+      }
+    }
+  }
+  var nTokens = [];
+  if (amtIdx !== -1) nTokens = tokens.slice(0, amtIdx);
+  else if (balIdx !== -1) nTokens = tokens.slice(0, balIdx);
+  else nTokens = tokens;
+  
+  return {
+    notes: nTokens.join(" "),
+    amount: amt || 0,
+    balance: bal || 0
+  };
 }
 
 function processParsedJagoData(transactions) {
@@ -803,29 +939,31 @@ function processParsedJagoData(transactions) {
   var sheet = ss.getSheetByName('REKAPAN JAGO');
   if (!sheet) throw new Error("Sheet bernama 'REKAPAN JAGO' tidak ditemukan!");
   
-  // HAPUS SEMUA DATA LAMA (Karena kita akan timpa / overwrite sepenuhnya dari PDF)
+  // Baca Unit yang sudah pernah ada agar tidak hilang jika di-overwrite
+  var existingUnits = {};
+  var oldData = sheet.getDataRange().getValues();
+  if (oldData.length > 1) {
+    for (var k = 1; k < oldData.length; k++) {
+      var oldDetails = (oldData[k][2] || "").toString().trim();
+      var oldUnit = oldData[k][7] || oldData[k][6] || "";
+      if (oldUnit && isNaN(Number(oldUnit))) {
+        var idMatch = oldDetails.match(/ID#\s*([A-Za-z0-9-]+)/);
+        if (idMatch) {
+          existingUnits[idMatch[1]] = oldUnit.toString().trim();
+        }
+      }
+    }
+  }
+
+  // HAPUS SEMUA DATA LAMA (Karena kita akan timpa sepenuhnya dari PDF yang sudah bersih)
   sheet.clear();
-  sheet.getRange("H:H").clearDataValidations(); // Hapus sisa validasi lama yang mungkin nge-bug
+  sheet.getRange("H:H").clearDataValidations();
   
   var headers = ["Date & Time", "Source/Destination", "Transaction Details", "Notes", "Kas Masuk", "Kas Keluar", "Balance", "Unit"];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
   
-  // Fungsi Cerdas untuk menebak Unit
-  function guessUnit(details, notes) {
-    var text = (details + " " + notes).toLowerCase();
-    if (text.includes("district")) return "District";
-    if (text.includes("osp")) return "OSP";
-    if (text.includes("isp")) return "ISP";
-    if (text.includes("hai") || text.includes("hi")) return "HAI";
-    if (text.includes("bges") || text.includes("mbb")) return "BGES & MBB";
-    if (text.includes("fbb")) return "FBB";
-    return ""; // KOSONGKAN jika tidak dikenali agar tidak error validasi data
-  }
-  
-  // --- BATAS TANGGAL IMPORT ---
-  // 30 Juli 2026 (Bulan di JavaScript dimulai dari 0, jadi 6 = Juli)
-  var CUTOFF_DATE = new Date(2026, 6, 30); 
+  var CUTOFF_DATE = new Date(2026, 6, 30); // 30 Juli 2026
   
   var newRows = [];
   var addedCount = 0;
@@ -834,55 +972,30 @@ function processParsedJagoData(transactions) {
     var trx = transactions[i];
     if (!trx || trx.length < 5) continue;
     
-    var dateStr = trx[0];
+    var dateStr = trx[0] || "";
     
-    // Filter Tanggal (Ekstrak dari teks kotor)
+    // Filter Tanggal
     var dateMatch = dateStr.match(/(\d{1,2}\s+[a-zA-Z]{3}\s+\d{4})/);
-    if (!dateMatch) continue; // Bukan baris transaksi (misal: header/footer)
+    if (!dateMatch) continue; // Bukan baris transaksi
     
     var englishDateStr = dateMatch[1].replace('Mei', 'May').replace('Agu', 'Aug').replace('Okt', 'Oct').replace('Des', 'Dec');
     var transDate = new Date(englishDateStr);
     if (!isNaN(transDate.getTime()) && transDate < CUTOFF_DATE) {
-      continue; // Lewati transaksi sebelum 30 Juli 2026
+      continue; // Lewati transaksi sebelum batas cutoff
     }
     
-    // Pastikan baris ini adalah transaksi asli (harus punya ID#)
-    if (!trx[1].includes("ID#") && !trx[2].includes("ID#")) {
-      continue; // Abaikan header tabel
-    }
+    // Bersihkan footer leakage dari source jika ada
+    var cleanSource = (trx[1] || "").replace(/PT Bank Jago Tbk.*$/is, "").trim();
+    var cleanDetails = trx[2] || "";
+
+    // Ekstrak Catatan, Amount, dan Balance secara akurat tanpa token-popping rapuh
+    var extracted = extractTrxMoneyAndNotes(trx[3], trx[4], trx[5]);
+    var notes = extracted.notes;
+    var amount = extracted.amount;
+    var balance = extracted.balance;
     
-    var notesAndMoney = (trx[3] + " " + trx[4] + " " + trx[5]).trim();
-    var tokens = notesAndMoney.split(/\s+/);
-    
-    if (tokens.length < 2) continue; // Invalid row
-    
-    var balanceStr = tokens.pop();
-    var amountStr = tokens.pop();
-    var notes = tokens.join(" "); // Anything left over belongs to Notes
-    
-    if (amountStr.toLowerCase().includes('amount')) continue;
-    
-    var isNegative = false;
-    var dashRegex = /[-–—−]/;
-    
-    if (notes.trim().match(/[-–—−]$/)) {
-      isNegative = true;
-      notes = notes.replace(/[-–—−]$/, '').trim();
-    } else if (amountStr.match(/^[-–—−]/)) {
-      isNegative = true;
-      amountStr = amountStr.replace(/^[-–—−]/, '');
-    } else if (amountStr.match(/[-–—−]$/)) {
-      isNegative = true;
-      amountStr = amountStr.replace(/[-–—−]$/, '');
-    } else if (amountStr.startsWith('(') && amountStr.endsWith(')')) {
-      isNegative = true;
-      amountStr = amountStr.slice(1, -1);
-    }
-    
-    // Clean numbers
-    var amount = parseFloat(amountStr.replace(/\./g, '').replace(/,/g, '.'));
-    if (isNegative) amount = -Math.abs(amount);
-    var balance = parseFloat(balanceStr.replace(/\./g, '').replace(/,/g, '.'));
+    // Jika tidak ada amount maupun balance, abaikan (bukan baris data riil)
+    if (amount === 0 && balance === 0) continue;
     
     var kasMasuk = "";
     var kasKeluar = "";
@@ -892,23 +1005,28 @@ function processParsedJagoData(transactions) {
       kasKeluar = Math.abs(amount);
     }
     
-    // Tebak Unit secara otomatis!
-    var autoUnit = guessUnit(trx[1] + " " + trx[2], notes);
+    // Prioritaskan unit lama jika transaksi sudah pernah diklasifikasikan
+    var autoUnit = "";
+    var transIdMatch = cleanDetails.match(/ID#\s*([A-Za-z0-9-]+)/);
+    if (transIdMatch && existingUnits[transIdMatch[1]]) {
+      autoUnit = existingUnits[transIdMatch[1]];
+    } else {
+      autoUnit = guessUnitJago(cleanDetails, notes);
+    }
     
     newRows.push([
-      trx[0],   // Date & Time
-      trx[1],   // Source/Dest
-      trx[2],   // Details
-      notes,    // Corrected Notes
-      kasMasuk, // Kas Masuk
-      kasKeluar,// Kas Keluar
-      balance,  // Actual Balance
-      autoUnit  // Unit Cerdas Otomatis
+      trx[0],      // Date & Time
+      cleanSource, // Source/Dest
+      cleanDetails,// Details
+      notes,       // Notes
+      kasMasuk,    // Kas Masuk
+      kasKeluar,   // Kas Keluar
+      balance,     // Actual Balance
+      autoUnit     // Unit
     ]);
     addedCount++;
   }
   
-  // Tulis sekaligus semua data ke Sheet (Jauh lebih cepat dari appendRow)
   if (newRows.length > 0) {
     sheet.getRange(2, 1, newRows.length, newRows[0].length).setValues(newRows);
   }
@@ -918,9 +1036,7 @@ function processParsedJagoData(transactions) {
   
   try {
     updateNeracaKeuangan();
-  } catch(e) {
-    // Ignore error so it doesn't break import
-  }
+  } catch(e) {}
   
   return "Berhasil! " + addedCount + " transaksi baru telah di-import ke sheet REKAPAN JAGO.";
 }
@@ -986,7 +1102,7 @@ function updateNeracaKeuangan(inMemoryFilter) {
         rawAmount = masuk > 0 ? masuk : (keluar > 0 ? -keluar : 0);
         
         var colG = data[i][6];
-        if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1) {
+        if (typeof colG === 'string' && isNaN(parseFloat(colG)) && colG.length > 1 && !colG.includes("NUM")) {
             // User likely pasted using old format: Unit is in Col G, Balance is in Col F, Amount in Col E
             unit = colG;
             balance = parseFloat(data[i][5]) || 0;
