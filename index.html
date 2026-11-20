@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>Klaim.id - Form Pengajuan</title>
     <link rel="icon" type="image/jpeg" href="logo.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -10,12 +10,15 @@
     <link rel="stylesheet" href="static/css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     
-    <!-- PWA Meta Tags -->
+    <!-- PWA & Mobile Meta Tags -->
     <link rel="manifest" href="static/manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#090514">
     <link rel="apple-touch-icon" href="static/icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="KLAIM.ID">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <script>
         const savedTheme = localStorage.getItem('theme') || 'dark';
         if (savedTheme === 'light') {
@@ -44,6 +47,10 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
+                <div class="mobile-logo-brand" style="display: none; align-items: center; gap: 0.6rem; width: 100%;">
+                    <img src="logo.jpg" alt="Logo" style="width: 32px; height: 32px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);">
+                    <span style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 800; background: linear-gradient(90deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">KLAIM.ID</span>
+                </div>
                 <div class="greeting">
                     <h1>Form Pengajuan Rembes</h1>
                     <p>Isi data di bawah ini untuk mengajukan klaim baru</p>
@@ -71,7 +78,7 @@
                             
                             <div class="form-group">
                                 <label for="nominal">Nominal Rembes (Rp)</label>
-                                <input type="number" id="nominal" class="form-control" placeholder="Contoh: 150000" required min="1">
+                                <input type="number" id="nominal" class="form-control" placeholder="Contoh: 150000" required min="1" inputmode="numeric">
                             </div>
                         </div>
 
@@ -105,7 +112,7 @@
                             
                             <div class="form-group">
                                 <label for="rekening">Nomer Rekening</label>
-                                <input type="text" id="rekening" class="form-control" placeholder="Contoh: 1234567890" required>
+                                <input type="text" id="rekening" class="form-control" placeholder="Contoh: 1234567890" required inputmode="numeric">
                             </div>
                         </div>
                         
@@ -115,25 +122,25 @@
                         </div>
                         
                         <div class="form-group">
-                            <label>Bukti Nota (JPG, PNG, PDF)</label>
+                            <label>Bukti Nota (Kamera / JPG, PNG, PDF)</label>
                             <div class="file-upload-wrapper" id="uploadWrapper">
                                 <div class="file-upload-icon">
-                                    <i class="ri-upload-cloud-2-line"></i>
+                                    <i class="ri-camera-lens-line"></i>
                                 </div>
                                 <div class="file-upload-text" id="fileText">
-                                    Klik atau drag file ke area ini untuk upload
+                                    Ketuk untuk foto nota via Kamera atau pilih file
                                 </div>
-                                <input type="file" id="bukti" accept=".jpg,.jpeg,.png,.pdf" required onchange="updateFileName(this)">
+                                <input type="file" id="bukti" accept="image/*,.pdf,application/pdf" required onchange="updateFileName(this)">
                             </div>
                         </div>
                         
-                        <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
-                            <a href="cek_status.html" class="btn" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);">
-                                <i class="ri-search-line"></i> Cek Status
-                            </a>
-                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <div style="margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                            <button type="submit" class="btn btn-primary" id="submitBtn" style="flex: 2; min-width: 180px;">
                                 <i class="ri-send-plane-fill"></i> Kirim Pengajuan
                             </button>
+                            <a href="cek_status.html" class="btn" style="flex: 1; min-width: 130px; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main);">
+                                <i class="ri-search-line"></i> Cek Status
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -292,6 +299,79 @@
             const savedTheme = localStorage.getItem('theme') || 'dark';
             document.getElementById('theme-icon').className = savedTheme === 'light' ? 'ri-moon-line' : 'ri-sun-line';
         });
+
+        // ==================== PWA & SERVICE WORKER LOGIC ====================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('static/sw.js').catch(err => {
+                    console.log('SW registration error:', err);
+                });
+            });
+        }
+
+        let deferredPwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner && !sessionStorage.getItem('pwa_dismissed')) {
+                banner.style.display = 'flex';
+            }
+        });
+
+        function triggerPwaInstall() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                deferredPwaPrompt.userChoice.then((choiceResult) => {
+                    deferredPwaPrompt = null;
+                    const banner = document.getElementById('pwa-install-banner');
+                    if (banner) banner.style.display = 'none';
+                });
+            } else {
+                alert('Untuk memasang KLAIM.ID di HP:\n• Android/Chrome: Ketuk menu titik tiga (⋮) lalu pilih "Install App / Tambahkan ke Layar Utama".\n• iPhone/Safari: Ketuk tombol Share (kotak panah ke atas [⎋]) lalu pilih "Tambah ke Layar Utama [⊞]".');
+            }
+        }
+
+        function dismissPwaPrompt() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) banner.style.display = 'none';
+            sessionStorage.setItem('pwa_dismissed', 'true');
+        }
     </script>
+
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <img src="logo.jpg" alt="Logo" style="width: 38px; height: 38px; border-radius: 10px; object-fit: cover; flex-shrink: 0;">
+            <div>
+                <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Pasang KLAIM.ID di HP</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Akses lebih cepat langsung dari layar utama</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button type="button" onclick="triggerPwaInstall()" class="btn btn-sm btn-primary" style="padding: 6px 12px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">
+                <i class="ri-download-cloud-line"></i> Pasang
+            </button>
+            <button type="button" onclick="dismissPwaPrompt()" style="background: none; border: none; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; padding: 4px;" title="Tutup">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="mobile-nav-item active">
+            <i class="ri-file-add-line"></i>
+            <span>Pengajuan</span>
+        </a>
+        <a href="cek_status.html" class="mobile-nav-item">
+            <i class="ri-search-eye-line"></i>
+            <span>Cek Status</span>
+        </a>
+        <a href="admin.html" class="mobile-nav-item">
+            <i class="ri-admin-line"></i>
+            <span>Admin</span>
+        </a>
+    </nav>
 </body>
 </html>

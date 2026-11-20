@@ -1,24 +1,48 @@
 {
-  "name": "Klaim.id",
-  "short_name": "Klaim",
-  "description": "Sistem Pengajuan Reimbursement Terpadu",
-  "start_url": "/",
+  "name": "KLAIM.ID - Sistem Klaim Reimbursement",
+  "short_name": "KLAIM.ID",
+  "description": "Sistem Pengajuan dan Monitoring Reimbursement Terpadu",
+  "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#2563eb",
+  "background_color": "#090514",
+  "theme_color": "#6366f1",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/static/icons/icon-192x192.png",
+      "src": "static/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/icons/icon-512x512.png",
+      "src": "static/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Form Pengajuan",
+      "short_name": "Pengajuan",
+      "description": "Buka formulir pengajuan rembes",
+      "url": "/index.html",
+      "icons": [{ "src": "static/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard Admin",
+      "short_name": "Admin",
+      "description": "Buka dashboard monitoring admin",
+      "url": "/admin.html",
+      "icons": [{ "src": "static/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Cek Status Klaim",
+      "short_name": "Cek Status",
+      "description": "Lacak status pengajuan",
+      "url": "/cek_status.html",
+      "icons": [{ "src": "static/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

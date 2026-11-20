@@ -1,4 +1,4 @@
-const CACHE_NAME = 'klaim-id-cache-v12';
+const CACHE_NAME = 'klaim-id-cache-v15';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const urlsToCache = [
   '/static/css/style.css',
   '/static/icons/icon-192x192.png',
   '/static/icons/icon-512x512.png',
+  '/logo.jpg',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css'
 ];
@@ -14,8 +15,11 @@ const urlsToCache = [
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache).catch(err => {
+        console.warn('Cache addAll warning:', err);
+      });
+    })
   );
 });
 
@@ -29,14 +33,39 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // Dynamic API calls (Google Apps Script / external APIs): Always Network First
+  if (url.hostname.includes('script.google.com') || url.pathname.includes('/exec')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Non-GET requests (POST uploads): Do not cache
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Static Assets & Pages: Cache First, Network Fallback with background revalidation
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        // Revalidate in background
+        fetch(event.request).then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, networkResponse));
+          }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+      return fetch(event.request);
     })
   );
 });
