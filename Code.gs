@@ -376,7 +376,8 @@ function doPost(e) {
     if (action === 'submit') {
       var fileUrl = '';
       var fileHash = '';
-      if (requestData.fileData && requestData.fileName && requestData.mimeType) {
+      if (requestData.fileData && requestData.fileName) {
+        var mimeType = requestData.mimeType || 'image/jpeg';
         var base64Data = requestData.fileData.split(',')[1] || requestData.fileData;
         var byteData = Utilities.base64Decode(base64Data);
         
@@ -391,7 +392,7 @@ function doPost(e) {
           }
         }
         
-        var blob = Utilities.newBlob(byteData, requestData.mimeType, requestData.fileName);
+        var blob = Utilities.newBlob(byteData, mimeType, requestData.fileName);
         var file = folder.createFile(blob);
         fileUrl = file.getUrl();
       }
@@ -407,9 +408,10 @@ function doPost(e) {
         
     } else if (action === 'update_status') {
       var tfUrl = '';
-      if (requestData.fileData && requestData.fileName && requestData.mimeType) {
+      if (requestData.fileData && requestData.fileName) {
+        var mimeType = requestData.mimeType || 'image/jpeg';
         var base64Data = requestData.fileData.split(',')[1] || requestData.fileData;
-        var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), requestData.mimeType, "TF_" + requestData.fileName);
+        var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, "TF_" + requestData.fileName);
         var file = folder.createFile(blob);
         try {
           file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
